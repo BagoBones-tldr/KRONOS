@@ -1,0 +1,19 @@
+[dotenv@17.3.1] injecting env (2) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+(node:1230) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+================================
+YOUR SCHEDULE FOR Mon Mar 30 2026
+================================
+
+📅 Nutrition
+⏰ 11:00 AM
+📍 Benthack 110
+
+📅 New Event
+⏰ 05:30 PM
+
+📅 Rock
+⏰ 09:30 AM
+📍 Fine Arts 24
+
+================================
