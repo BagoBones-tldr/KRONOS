@@ -2,10 +2,10 @@
   "name": "caldav-test",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "daily-clean.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+    "start": "node daily-clean.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
