@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.projectkronos.pre-event-alerts</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>/Users/edwards/Developer/project-kronos/launchd/run-pre-event-alerts.sh</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StartInterval</key>
+  <integer>60</integer>
+
+  <key>ProcessType</key>
+  <string>Background</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>/Users/edwards</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/edwards/Developer/project-kronos/pre-event-alerts.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/edwards/Developer/project-kronos/pre-event-alerts.log</string>
+</dict>
+</plist>

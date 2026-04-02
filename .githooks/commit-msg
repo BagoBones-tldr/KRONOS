@@ -1,0 +1,4 @@
+#!/bin/zsh
+set -euo pipefail
+
+/Users/edwards/Developer/project-kronos/scripts/append-kronos-log-entry.sh "$1"

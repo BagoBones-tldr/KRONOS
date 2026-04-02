@@ -1,9 +1,10 @@
-require('dotenv').config();
+const { loadEnv } = require('./env');
+const { getUpdates } = require('./telegram-service');
+
+loadEnv();
 
 async function getChatId() {
-  const url = `https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/getUpdates`;
-  const res = await fetch(url);
-  const data = await res.json();
+  const data = await getUpdates();
   console.log(JSON.stringify(data, null, 2));
 }
 

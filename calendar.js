@@ -1,17 +1,7 @@
-const { DAVClient } = require('tsdav');
+const { createCalendarClient } = require('./caldav-client');
 
 async function connectToAppleCalendar() {
-  const client = new DAVClient({
-    serverUrl: 'https://caldav.icloud.com',
-    credentials: {
-      username: 'quintinedwards@icloud.com',
-      password: 'ntbl-pgxu-dnvx-iant'
-    },
-    authMethod: 'Basic',
-    defaultAccountType: 'caldav'
-  });
-
-  await client.login();
+  const client = await createCalendarClient();
   console.log('Connected to Apple Calendar!');
   
   const calendars = await client.fetchCalendars();

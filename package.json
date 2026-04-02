@@ -1,11 +1,13 @@
 {
-  "name": "caldav-test",
+  "name": "project-kronos",
   "version": "1.0.0",
-  "description": "",
+  "description": "Project KRONOS personal assistant",
   "main": "daily-clean.js",
   "scripts": {
-    "start": "node daily-clean.js"
-},
+    "start": "node daily-clean.js",
+    "commands": "node telegram-commands.js",
+    "alerts": "node pre-event-alerts.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

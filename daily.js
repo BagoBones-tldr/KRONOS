@@ -1,17 +1,7 @@
-const { DAVClient } = require('tsdav');
+const { createCalendarClient } = require('./caldav-client');
 
 async function getDailySchedule() {
-  const client = new DAVClient({
-    serverUrl: 'https://caldav.icloud.com',
-    credentials: {
-      username: 'quintinedwards@icloud.com',
-      password: 'ntbl-pgxu-dnvx-iant'
-    },
-    authMethod: 'Basic',
-    defaultAccountType: 'caldav'
-  });
-
-  await client.login();
+  const client = await createCalendarClient();
   
   const today = new Date();
   const tomorrow = new Date(today);

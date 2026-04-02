@@ -1,1 +1,7 @@
 .env
+node_modules/
+schedule.log
+*.log
+.DS_Store
+alerts-state.json
+telegram-state.json
