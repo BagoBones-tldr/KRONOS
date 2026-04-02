@@ -31,6 +31,14 @@ Send the daily briefing to Telegram:
 node daily-clean.js
 ```
 
+Railway/cloud scheduled runs use the local-time gate:
+
+- Railway runs KRONOS hourly
+- `daily-clean.js --scheduled` only sends when the configured local briefing hour is reached
+- defaults:
+  - `BRIEFING_TIMEZONE=America/Chicago`
+  - `BRIEFING_HOUR=8`
+
 Start the Telegram command listener:
 
 ```bash
