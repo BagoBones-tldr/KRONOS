@@ -513,3 +513,59 @@
   - `telegram-service.js`
   - `telegram-state.js`
 
+### 2026-04-20 09:31:46 PM CDT
+- Summary: `Add Claude AI conversation integration and full KRONOS feature set`
+- Branch: `main`
+- Files:
+  - `.dockerignore`
+  - `.env.example`
+  - `.githooks/commit-msg`
+  - `.gitignore`
+  - `Dockerfile`
+  - `KRONOS_LOG.md`
+  - `KRONOS_RECOVERY.md`
+  - `RASPBERRY_PI_UPLOAD_INSTRUCTIONS.md`
+  - `README.md`
+  - `ai-policy.js`
+  - `ai-service.js`
+  - `ai-smoke-test.js`
+  - `alert-service.js`
+  - `briefing-service.js`
+  - `caldav-client.js`
+  - `calendar-service.js`
+  - `calendar-write-service.js`
+  - `command-service.js`
+  - `compose.yml`
+  - `conversation-state.js`
+  - `daily-clean.js`
+  - `debug-reminders.js`
+  - `end-of-day.js`
+  - `http-server.js`
+  - `launchd/com.projectkronos.daily-briefing.plist`
+  - `launchd/com.projectkronos.end-of-day.plist`
+  - `launchd/com.projectkronos.pre-event-alerts.plist`
+  - `launchd/com.projectkronos.telegram-commands.plist`
+  - `launchd/install-launchagents.sh`
+  - `launchd/run-daily-briefing.sh`
+  - `launchd/run-end-of-day.sh`
+  - `launchd/run-pre-event-alerts.sh`
+  - `launchd/run-telegram-commands.sh`
+  - `launchd/uninstall-launchagents.sh`
+  - `log-service.js`
+  - `package-lock.json`
+  - `package.json`
+  - `preference-state.js`
+  - `reminder-alerts.js`
+  - `reminder-service.js`
+  - `runtime-paths.js`
+  - `schedule-analysis.js`
+  - `scripts/append-kronos-log-entry.sh`
+  - `scripts/storage-smoke-test.js`
+  - `scripts/sync-obsidian-note.sh`
+  - `storage-layout.js`
+  - `storage.js`
+  - `task-state.js`
+  - `telegram-commands.js`
+  - `telegram-service.js`
+  - `telegram-state.js`
+
