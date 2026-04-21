@@ -30,7 +30,7 @@ async function telegramRequest(method, payload = {}) {
     throw new Error(`Telegram API error: ${data.description || 'unknown error'}`);
   }
 
-  return data.result;
+  return Array.isArray(data.result) || data.result !== null ? data.result : [];
 }
 
 async function sendTelegramMessage(chatId, text) {
@@ -38,6 +38,13 @@ async function sendTelegramMessage(chatId, text) {
     chat_id: chatId,
     text,
     parse_mode: 'HTML'
+  });
+}
+
+async function sendChatAction(chatId, action = 'typing') {
+  return telegramRequest('sendChatAction', {
+    chat_id: chatId,
+    action
   });
 }
 
@@ -56,5 +63,6 @@ async function getUpdates(options = {}) {
 module.exports = {
   getUpdates,
   sendTelegramMessage,
+  sendChatAction,
   getRequiredEnv
 };

@@ -1,7 +1,8 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT="/Users/edwards/Developer/project-kronos"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_FILE="$ROOT/KRONOS_LOG.md"
 COMMIT_MSG_FILE="${1:-}"
 

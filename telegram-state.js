@@ -1,25 +1,18 @@
-const fs = require('fs/promises');
-const path = require('path');
+const { readJson, writeJson } = require('./storage');
+const { STORAGE_PATHS, LEGACY_STORAGE_PATHS } = require('./storage-layout');
 
-const TELEGRAM_STATE_PATH = path.join(__dirname, 'telegram-state.json');
+const TELEGRAM_STATE_PATH = STORAGE_PATHS.telegramState;
+const LEGACY_TELEGRAM_STATE_PATH = LEGACY_STORAGE_PATHS.telegramState;
 
 async function loadTelegramState() {
-  try {
-    const raw = await fs.readFile(TELEGRAM_STATE_PATH, 'utf8');
-    const parsed = JSON.parse(raw);
-    return {
-      nextOffset: typeof parsed.nextOffset === 'number' ? parsed.nextOffset : undefined
-    };
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return {};
-    }
-    throw error;
-  }
+  const parsed = await readJson(TELEGRAM_STATE_PATH, null) ?? await readJson(LEGACY_TELEGRAM_STATE_PATH, {});
+  return {
+    nextOffset: typeof parsed?.nextOffset === 'number' ? parsed.nextOffset : undefined
+  };
 }
 
 async function saveTelegramState(state) {
-  await fs.writeFile(TELEGRAM_STATE_PATH, JSON.stringify(state, null, 2));
+  await writeJson(TELEGRAM_STATE_PATH, state);
 }
 
 module.exports = {

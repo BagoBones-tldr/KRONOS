@@ -8,7 +8,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/zsh</string>
-    <string>/Users/edwards/Developer/project-kronos/launchd/run-pre-event-alerts.sh</string>
+    <string>__KRONOS_ROOT__/launchd/run-pre-event-alerts.sh</string>
   </array>
 
   <key>RunAtLoad</key>
@@ -23,15 +23,15 @@
   <key>EnvironmentVariables</key>
   <dict>
     <key>HOME</key>
-    <string>/Users/edwards</string>
+    <string>__KRONOS_HOME__</string>
     <key>PATH</key>
     <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   </dict>
 
   <key>StandardOutPath</key>
-  <string>/Users/edwards/Developer/project-kronos/pre-event-alerts.log</string>
+  <string>__KRONOS_ROOT__/pre-event-alerts.log</string>
 
   <key>StandardErrorPath</key>
-  <string>/Users/edwards/Developer/project-kronos/pre-event-alerts.log</string>
+  <string>__KRONOS_ROOT__/pre-event-alerts.log</string>
 </dict>
 </plist>

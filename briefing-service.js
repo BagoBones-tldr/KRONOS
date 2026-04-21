@@ -1,4 +1,5 @@
 const { analyzeSchedule } = require('./schedule-analysis');
+const { generateAiBriefing, generateAiWrapUp } = require('./ai-service');
 
 function buildDailyContext(events, now = new Date(), weather = null) {
   const schedule = analyzeSchedule(events, now);
@@ -10,6 +11,28 @@ function buildDailyContext(events, now = new Date(), weather = null) {
     weather,
     schedule,
     suggestedFocus: suggestFocus(schedule)
+  };
+}
+
+function buildWrapUpContext(events, now = new Date(), tasks = {}) {
+  const schedule = analyzeSchedule(events, now);
+  const allTasks = Array.isArray(tasks.allTasks) ? tasks.allTasks : [];
+  const openTasks = Array.isArray(tasks.openTasks) ? tasks.openTasks : [];
+  const completedTasks = Array.isArray(tasks.completedTasks) ? tasks.completedTasks : [];
+
+  return {
+    dateLabel: now.toDateString(),
+    now,
+    events,
+    schedule,
+    tasks: {
+      openToday: filterTasksByDay(openTasks, now),
+      dueTomorrow: filterTasksByDay(openTasks, addDays(now, 1)),
+      completedToday: filterCompletedTasksByDay(completedTasks, now),
+      totalOpen: openTasks.length,
+      totalCompletedToday: filterCompletedTasksByDay(completedTasks, now).length,
+      allTasks
+    }
   };
 }
 
@@ -68,6 +91,78 @@ function generateBriefing(context) {
   return lines.join('\n');
 }
 
+async function generateBriefingWithAi(context) {
+  try {
+    const aiBriefing = await generateAiBriefing(context);
+    if (aiBriefing) {
+      return aiBriefing;
+    }
+  } catch (error) {
+    console.warn('AI briefing failed:', error.message);
+  }
+
+  return generateBriefing(context);
+}
+
+function generateWrapUp(context) {
+  const lines = [];
+  lines.push('🌙 <b>End of Day Wrap-Up</b>');
+  lines.push('');
+  lines.push(`📘 <b>${context.dateLabel}</b>`);
+  lines.push(`Today held ${context.schedule.totalEvents} event(s) covering ${context.schedule.busyMinutes} busy minutes.`);
+
+  if (context.schedule.conflicts.length > 0) {
+    lines.push(`You also had ${context.schedule.conflicts.length} scheduling conflict(s) worth a look.`);
+  }
+
+  const completedToday = context.tasks.completedToday;
+  if (completedToday.length > 0) {
+    lines.push('');
+    lines.push('<b>Completed Today</b>');
+    for (const task of completedToday.slice(0, 5)) {
+      lines.push(formatTaskBullet(task));
+    }
+  } else {
+    lines.push('');
+    lines.push('No tasks were marked complete today.');
+  }
+
+  const openToday = context.tasks.openToday;
+  if (openToday.length > 0) {
+    lines.push('');
+    lines.push('<b>Still Open</b>');
+    for (const task of openToday.slice(0, 5)) {
+      lines.push(formatTaskBullet(task));
+    }
+  }
+
+  const dueTomorrow = context.tasks.dueTomorrow;
+  if (dueTomorrow.length > 0) {
+    lines.push('');
+    lines.push('<b>Due Tomorrow</b>');
+    for (const task of dueTomorrow.slice(0, 5)) {
+      lines.push(formatTaskBullet(task));
+    }
+  }
+
+  lines.push('');
+  lines.push(escapeHtml(suggestWrapUpFocus(context)));
+  return lines.join('\n');
+}
+
+async function generateWrapUpWithAi(context) {
+  try {
+    const aiWrapUp = await generateAiWrapUp(context);
+    if (aiWrapUp) {
+      return aiWrapUp;
+    }
+  } catch (error) {
+    console.warn('AI wrap-up failed:', error.message);
+  }
+
+  return generateWrapUp(context);
+}
+
 function suggestFocus(schedule) {
   if (schedule.conflicts.length > 0) {
     return 'Review your overlapping events and decide which one should move.';
@@ -118,6 +213,81 @@ function formatWeatherLine(weather) {
   return line;
 }
 
+function formatTaskBullet(task) {
+  const classLabel = task.className ? ` for ${escapeHtml(task.className)}` : '';
+  const dueLabel = formatDueDate(task.dueDate);
+  return dueLabel
+    ? `• ${escapeHtml(task.description)}${classLabel} (${escapeHtml(dueLabel)})`
+    : `• ${escapeHtml(task.description)}${classLabel}`;
+}
+
+function formatDueDate(isoString) {
+  if (!isoString) {
+    return '';
+  }
+
+  const date = new Date(isoString);
+  if (Number.isNaN(date.valueOf())) {
+    return '';
+  }
+
+  const hasExplicitTime = !(date.getHours() === 0 && date.getMinutes() === 0);
+  const timeLabel = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+
+  return hasExplicitTime
+    ? `due ${date.toDateString()} at ${timeLabel}`
+    : `due ${date.toDateString()}`;
+}
+
+function filterTasksByDay(tasks, day) {
+  return tasks.filter(task => sameDay(task.dueDate, day));
+}
+
+function filterCompletedTasksByDay(tasks, day) {
+  return tasks.filter(task => sameDay(task.completedAt, day));
+}
+
+function sameDay(value, targetDay) {
+  if (!value) {
+    return false;
+  }
+
+  const date = new Date(value);
+  const target = new Date(targetDay);
+  if (Number.isNaN(date.valueOf()) || Number.isNaN(target.valueOf())) {
+    return false;
+  }
+
+  return date.getFullYear() === target.getFullYear()
+    && date.getMonth() === target.getMonth()
+    && date.getDate() === target.getDate();
+}
+
+function suggestWrapUpFocus(context) {
+  if (context.tasks.dueTomorrow.length > 0) {
+    return 'Tomorrow has real weight on it. A quick look at those due tasks tonight would be a smart move.';
+  }
+
+  if (context.tasks.openToday.length > 0) {
+    return 'There are still a few open loops from today. Decide what rolls forward and let the rest go for the night.';
+  }
+
+  if (context.tasks.completedToday.length > 0) {
+    return 'Solid work today. Close it down clean and let tomorrow start lighter.';
+  }
+
+  return 'Quiet finish. Take the win and reset for tomorrow.';
+}
+
+function addDays(baseDate, amount) {
+  const next = new Date(baseDate);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
 function formatTime(value) {
   return value.toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -134,5 +304,9 @@ function escapeHtml(value) {
 
 module.exports = {
   buildDailyContext,
-  generateBriefing
+  buildWrapUpContext,
+  generateBriefing,
+  generateBriefingWithAi,
+  generateWrapUp,
+  generateWrapUpWithAi
 };

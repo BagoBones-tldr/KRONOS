@@ -1,9 +1,9 @@
-const fs = require('fs/promises');
-const path = require('path');
-
 const { minutesBetween } = require('./schedule-analysis');
+const { readJson, writeJson } = require('./storage');
+const { STORAGE_PATHS, LEGACY_STORAGE_PATHS } = require('./storage-layout');
 
-const ALERT_STATE_PATH = path.join(__dirname, 'alerts-state.json');
+const ALERT_STATE_PATH = STORAGE_PATHS.alertState;
+const LEGACY_ALERT_STATE_PATH = LEGACY_STORAGE_PATHS.alertState;
 
 async function findUpcomingAlerts(events, now = new Date(), options = {}) {
   const reminderLeadMinutes = options.reminderLeadMinutes ?? getEnvNumber('ALERT_LEAD_MINUTES', 30);
@@ -65,23 +65,15 @@ async function markAlertsSent(alerts, state, now = new Date()) {
     nextState.sentAlerts[alert.eventKey] = now.toISOString();
   }
 
-  await fs.writeFile(ALERT_STATE_PATH, JSON.stringify(nextState, null, 2));
+  await writeJson(ALERT_STATE_PATH, nextState);
 }
 
 async function loadAlertState() {
-  try {
-    const raw = await fs.readFile(ALERT_STATE_PATH, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (!parsed.sentAlerts || typeof parsed.sentAlerts !== 'object') {
-      return { sentAlerts: {} };
-    }
-    return parsed;
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return { sentAlerts: {} };
-    }
-    throw error;
+  const parsed = await readJson(ALERT_STATE_PATH, null) ?? await readJson(LEGACY_ALERT_STATE_PATH, { sentAlerts: {} });
+  if (!parsed?.sentAlerts || typeof parsed.sentAlerts !== 'object') {
+    return { sentAlerts: {} };
   }
+  return parsed;
 }
 
 function pruneOldAlerts(state, now) {

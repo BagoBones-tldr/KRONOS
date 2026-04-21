@@ -3,19 +3,19 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.projectkronos.telegram-commands</string>
+  <string>com.projectkronos.end-of-day</string>
 
   <key>ProgramArguments</key>
   <array>
     <string>/bin/zsh</string>
-    <string>__KRONOS_ROOT__/launchd/run-telegram-commands.sh</string>
+    <string>__KRONOS_ROOT__/launchd/run-end-of-day.sh</string>
   </array>
 
   <key>RunAtLoad</key>
   <true/>
 
-  <key>KeepAlive</key>
-  <true/>
+  <key>StartInterval</key>
+  <integer>900</integer>
 
   <key>ProcessType</key>
   <string>Background</string>
@@ -29,9 +29,9 @@
   </dict>
 
   <key>StandardOutPath</key>
-  <string>__KRONOS_ROOT__/telegram-commands.log</string>
+  <string>__KRONOS_ROOT__/end-of-day.log</string>
 
   <key>StandardErrorPath</key>
-  <string>__KRONOS_ROOT__/telegram-commands.log</string>
+  <string>__KRONOS_ROOT__/end-of-day.log</string>
 </dict>
 </plist>

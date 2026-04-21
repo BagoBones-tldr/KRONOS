@@ -5,4 +5,4 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$ROOT"
-exec /opt/homebrew/bin/node pre-event-alerts.js
+exec /opt/homebrew/bin/node daily-clean.js --scheduled

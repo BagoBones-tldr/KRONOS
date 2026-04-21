@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node daily-clean.js --scheduled",
     "commands": "node telegram-commands.js",
-    "alerts": "node pre-event-alerts.js"
+    "alerts": "node pre-event-alerts.js",
+    "reminders": "node reminder-alerts.js",
+    "storage:test": "node scripts/storage-smoke-test.js",
+    "http": "node http-server.js"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +17,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "dotenv": "^17.3.1",
+    "express": "^5.2.1",
     "tsdav": "^2.1.8"
   }
 }

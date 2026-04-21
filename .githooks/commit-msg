@@ -1,4 +1,8 @@
 #!/bin/zsh
 set -euo pipefail
 
-/Users/edwards/Developer/project-kronos/scripts/append-kronos-log-entry.sh "$1"
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$HOOK_DIR/.." && pwd)"
+
+"$ROOT/scripts/append-kronos-log-entry.sh" "$1"
+"$ROOT/scripts/sync-obsidian-note.sh" "$1"

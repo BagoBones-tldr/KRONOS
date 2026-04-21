@@ -1,0 +1,44 @@
+services:
+  kronos-commands:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      KRONOS_STORAGE_PATH: ${KRONOS_STORAGE_PATH:-/app/data}
+    volumes:
+      - ${KRONOS_STORAGE_HOST_PATH:-./kronos-data}:${KRONOS_STORAGE_PATH:-/app/data}
+    command: ["node", "telegram-commands.js"]
+
+  kronos-alerts:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      KRONOS_STORAGE_PATH: ${KRONOS_STORAGE_PATH:-/app/data}
+    volumes:
+      - ${KRONOS_STORAGE_HOST_PATH:-./kronos-data}:${KRONOS_STORAGE_PATH:-/app/data}
+    command: ["/bin/sh", "-lc", "while true; do node pre-event-alerts.js; sleep 60; done"]
+
+  kronos-briefing:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      KRONOS_STORAGE_PATH: ${KRONOS_STORAGE_PATH:-/app/data}
+    volumes:
+      - ${KRONOS_STORAGE_HOST_PATH:-./kronos-data}:${KRONOS_STORAGE_PATH:-/app/data}
+    command: ["/bin/sh", "-lc", "while true; do node daily-clean.js --scheduled; sleep 3600; done"]
+
+  kronos-wrapup:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      KRONOS_STORAGE_PATH: ${KRONOS_STORAGE_PATH:-/app/data}
+    volumes:
+      - ${KRONOS_STORAGE_HOST_PATH:-./kronos-data}:${KRONOS_STORAGE_PATH:-/app/data}
+    command: ["/bin/sh", "-lc", "while true; do node end-of-day.js --scheduled; sleep 900; done"]

@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+*.log
+state
+conversation-state.json
+preferences-state.json
+telegram-state.json
+tasks-state.json
+alerts-state.json
+end-of-day-state.json

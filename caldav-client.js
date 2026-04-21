@@ -13,7 +13,7 @@ function getEnv(name) {
 
 async function createCalendarClient() {
   const client = new DAVClient({
-    serverUrl: 'https://caldav.icloud.com',
+    serverUrl: process.env.CALDAV_SERVER_URL || 'https://caldav.icloud.com',
     credentials: {
       username: getEnv('APPLE_ID'),
       password: getEnv('APPLE_PASS')

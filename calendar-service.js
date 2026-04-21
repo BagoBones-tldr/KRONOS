@@ -17,26 +17,45 @@ function parseEventData(data) {
   const location = getIcsField(unfolded, 'LOCATION') || '';
   const start = parseIcsDate(data, 'DTSTART');
   const end = parseIcsDate(data, 'DTEND');
+  const isRecurringSeries = /^RRULE(?:;[^:]*)?:/m.test(unfolded);
+  const recurrenceId = getIcsField(unfolded, 'RECURRENCE-ID') || '';
 
   return {
     title: summary,
     description,
     location,
     start,
-    end
+    end,
+    isRecurringSeries,
+    recurrenceId
   };
 }
 
 function parseIcsDate(data, fieldName) {
   const unfolded = unfoldIcs(data);
-  const match = unfolded.match(new RegExp(`^${fieldName}(?:;[^:]*)?:(\\d{8}T\\d{6}Z?)$`, 'm'));
-  if (!match) {
+  const dateTimeMatch = unfolded.match(new RegExp(`^${fieldName}(?:;[^:]*)?:(\\d{8}T\\d{6}Z?)$`, 'm'));
+  if (dateTimeMatch) {
+    const raw = dateTimeMatch[1];
+    const iso = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T${raw.slice(9, 11)}:${raw.slice(11, 13)}:${raw.slice(13, 15)}${raw.endsWith('Z') ? 'Z' : ''}`;
+    return new Date(iso);
+  }
+
+  const dateOnlyMatch = unfolded.match(new RegExp(`^${fieldName}(?:;[^:]*)?:(\\d{8})$`, 'm'));
+  if (!dateOnlyMatch) {
     return null;
   }
 
-  const raw = match[1];
-  const iso = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}T${raw.slice(9, 11)}:${raw.slice(11, 13)}:${raw.slice(13, 15)}${raw.endsWith('Z') ? 'Z' : ''}`;
-  return new Date(iso);
+  const raw = dateOnlyMatch[1];
+  const result = new Date(
+    Number(raw.slice(0, 4)),
+    Number(raw.slice(4, 6)) - 1,
+    Number(raw.slice(6, 8)),
+    0,
+    0,
+    0,
+    0
+  );
+  return Number.isNaN(result.valueOf()) ? null : result;
 }
 
 function getIcsField(data, fieldName) {
@@ -78,7 +97,13 @@ async function fetchEventsForDate(targetDate = new Date()) {
   }
 
   return normalizedEvents
-    .filter(event => event.start instanceof Date && !Number.isNaN(event.start.valueOf()))
+    .filter(event => {
+      if (!(event.start instanceof Date) || Number.isNaN(event.start.valueOf())) {
+        console.warn(`Dropped event with invalid start date: "${event.title}"`);
+        return false;
+      }
+      return true;
+    })
     .sort((a, b) => a.start - b.start);
 }
 

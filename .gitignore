@@ -1,10 +1,16 @@
 .env
+*.swp
+*.swo
 node_modules/
 schedule.log
 *.log
 .DS_Store
 alerts-state.json
 telegram-state.json
+conversation-state.json
+preferences-state.json
+tasks-state.json
+end-of-day-state.json
 
 KRONOS Mac GitHub pass
 KRONOS Mac GitHub pass.pub
