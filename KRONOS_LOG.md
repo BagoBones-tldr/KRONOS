@@ -585,3 +585,10 @@
   - `state/storage-smoke-test.json`
   - `state/telegram.json`
 
+### 2026-04-20 09:52:48 PM CDT
+- Summary: `remove claude worktrees and state from repo`
+- Branch: `main`
+- Files:
+  - `.gitignore`
+  - `KRONOS_LOG.md`
+
