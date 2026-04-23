@@ -634,3 +634,10 @@
   - `KRONOS_LOG.md`
   - `scripts/update-claude-context.sh`
 
+### 2026-04-23 02:19:35 PM CDT
+- Summary: `Add Pi deploy script with systemd service generation`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `pi/deploy.sh`
+

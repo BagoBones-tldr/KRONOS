@@ -161,6 +161,32 @@ EOF
 
 ok "Written: kronos-daily.service + kronos-daily.timer"
 
+# kronos-http.service
+# Keeps the HTTP chat endpoint (POST /chat) alive permanently.
+# The widget and any local clients use this to talk to KRONOS.
+sudo tee "$SERVICE_DIR/kronos-http.service" > /dev/null <<EOF
+[Unit]
+Description=KRONOS HTTP Chat Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=$USER
+WorkingDirectory=$ROOT
+EnvironmentFile=$ROOT/.env
+ExecStart=$NODE $ROOT/http-server.js
+Restart=always
+RestartSec=5
+StandardOutput=append:$ROOT/http-server.log
+StandardError=append:$ROOT/http-server.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+ok "Written: kronos-http.service"
+
 # ── 5. Reload systemd and enable services ─────────────────────────────────────
 step "Enabling and starting services"
 
@@ -169,10 +195,10 @@ step "Enabling and starting services"
 sudo systemctl daemon-reload
 ok "systemd reloaded"
 
-sudo systemctl enable kronos-telegram kronos-alerts kronos-daily.timer
+sudo systemctl enable kronos-telegram kronos-alerts kronos-http kronos-daily.timer
 ok "Services enabled (will start on boot)"
 
-sudo systemctl start kronos-telegram kronos-alerts kronos-daily.timer
+sudo systemctl start kronos-telegram kronos-alerts kronos-http kronos-daily.timer
 ok "Services started"
 
 # ── 6. Status report ──────────────────────────────────────────────────────────
@@ -182,7 +208,7 @@ echo "  KRONOS is running on your Pi."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-sudo systemctl status kronos-telegram kronos-alerts --no-pager --lines=3
+sudo systemctl status kronos-telegram kronos-alerts kronos-http --no-pager --lines=3
 
 echo ""
 echo "Useful commands:"
