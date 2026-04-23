@@ -8,6 +8,7 @@ const {
   generateWrapUpWithAi
 } = require('./briefing-service');
 const { buildLogSummary } = require('./log-service');
+const { appendNote } = require('./obsidian-service');
 const { fetchDailyWeather } = require('./weather-service');
 const { generateAiConversation, generateAiFocus, isAiConfigured } = require('./ai-service');
 const {
@@ -139,6 +140,10 @@ async function buildCommandResult(commandText, now = new Date(), conversationSta
 
     if (command === '/remember') {
       return buildResult(await buildRememberResponse(args || originalText, preferences), command, originalText);
+    }
+
+    if (command === '/note') {
+      return buildResult(await buildNoteResponse(args || originalText), command, originalText);
     }
 
     if (command === '/preferences') {
@@ -607,6 +612,19 @@ async function buildRememberResponse(input, preferences) {
   return update.confirmation || 'Locked in. I’ll remember that going forward.';
 }
 
+async function buildNoteResponse(input) {
+  const text = String(input || '').trim();
+  if (!text) {
+    return 'What do you want to log? Try "/note picked up hardware today".';
+  }
+  try {
+    appendNote(text);
+    return `Logged to today's journal.`;
+  } catch (err) {
+    return `Couldn't write to Obsidian: ${err.message}`;
+  }
+}
+
 function buildPreferencesResponse(preferences) {
   const lines = formatPreferences(preferences);
   if (lines.length === 0) {
@@ -680,6 +698,7 @@ function buildHelpResponse() {
     '/remove - Remove a calendar event from a phrase like "remove workout tomorrow at 3pm"',
     '/delete - Alias for /remove',
     '/remember - Save an explicit preference or note for KRONOS',
+    '/note - Append a timestamped entry to today\'s Obsidian journal',
     '/preferences - Show saved preferences KRONOS remembers',
     '/tasks - Show open tasks',
     '/task - Add a task from a phrase like "/task finish the essay tomorrow"',
@@ -937,6 +956,11 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
 
   if (likelyIntentRequest && matchesAny(normalized, ['preferences', 'show my preferences', 'what do you remember', 'what do you remember about me'])) {
     return { command: '/preferences', args: '' };
+  }
+
+  const noteMatch = normalized.match(/^(?:log|note|journal)\s+(.+)/i);
+  if (noteMatch?.[1]) {
+    return { command: '/note', args: noteMatch[1].trim() };
   }
 
   if (likelyIntentRequest && matchesAny(normalized, ['tasks', 'my tasks', 'todo', 'to do', 'what are my tasks', 'what do i need to do'])) {
@@ -1677,6 +1701,7 @@ async function buildConversationalFallback(message, now = new Date(), conversati
         '/remind',
         '/remove',
         '/remember',
+        '/note',
         '/preferences',
         '/tasks',
         '/task',

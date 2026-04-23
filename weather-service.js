@@ -2,23 +2,43 @@ const { loadEnv } = require('./env');
 
 loadEnv();
 
-function getWeatherConfig() {
+let _cachedGeoLocation = null;
+
+async function autoDetectLocation() {
+  if (_cachedGeoLocation) return _cachedGeoLocation;
+  try {
+    const res = await fetch('https://ipapi.co/json/');
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.latitude || !data.longitude) return null;
+    _cachedGeoLocation = {
+      latitude: String(data.latitude),
+      longitude: String(data.longitude),
+      timezone: data.timezone || 'auto'
+    };
+    return _cachedGeoLocation;
+  } catch {
+    return null;
+  }
+}
+
+async function getWeatherConfig() {
   const latitude = process.env.WEATHER_LATITUDE;
   const longitude = process.env.WEATHER_LONGITUDE;
 
-  if (!latitude || !longitude) {
-    return null;
+  if (latitude && longitude) {
+    return {
+      latitude,
+      longitude,
+      timezone: process.env.WEATHER_TIMEZONE || 'auto'
+    };
   }
 
-  return {
-    latitude,
-    longitude,
-    timezone: process.env.WEATHER_TIMEZONE || 'auto'
-  };
+  return autoDetectLocation();
 }
 
 async function fetchDailyWeather(now = new Date()) {
-  const config = getWeatherConfig();
+  const config = await getWeatherConfig();
   if (!config) {
     return null;
   }

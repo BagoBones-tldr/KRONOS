@@ -1,4 +1,3 @@
-const path = require('path');
 const { loadEnv } = require('./env');
 const { fetchTodayEvents } = require('./calendar-service');
 const { buildWrapUpContext, generateWrapUpWithAi } = require('./briefing-service');

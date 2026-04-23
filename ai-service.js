@@ -116,7 +116,7 @@ async function generateAiConversation(message, options = {}) {
   const system = buildConversationSystem(options);
 
   const response = await anthropic.messages.create({
-    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
     max_tokens: 220,
     temperature: 0.3,
     system,
@@ -134,7 +134,7 @@ async function generateAiConversation(message, options = {}) {
 async function requestAnthropicText(prompt, options = {}) {
   const anthropic = getAnthropicClient();
   const requestParams = {
-    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
     max_tokens: options.maxTokens || 320,
     temperature: options.temperature ?? 0.4,
     system: options.system || buildKronosSystemPrompt(),

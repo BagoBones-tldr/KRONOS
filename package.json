@@ -8,6 +8,7 @@
     "commands": "node telegram-commands.js",
     "alerts": "node pre-event-alerts.js",
     "reminders": "node reminder-alerts.js",
+    "note": "node scripts/note.js",
     "storage:test": "node scripts/storage-smoke-test.js",
     "http": "node http-server.js"
   },

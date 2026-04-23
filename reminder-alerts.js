@@ -85,7 +85,11 @@ async function sendReminderAlerts() {
   }
 }
 
-sendReminderAlerts().catch(error => {
-  console.error(error);
-  process.exitCode = 1;
-});
+module.exports = { sendReminderAlerts };
+
+if (require.main === module) {
+  sendReminderAlerts().catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
