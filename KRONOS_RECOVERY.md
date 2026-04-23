@@ -65,9 +65,6 @@ launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.projectkronos.pre-
   - `APPLE_PASS`
   - `TELEGRAM_TOKEN`
   - `TELEGRAM_CHAT_ID`
-  - `WEATHER_LATITUDE`
-  - `WEATHER_LONGITUDE`
-  - `WEATHER_TIMEZONE`
   - `BRIEFING_TIMEZONE`
   - `BRIEFING_HOUR`
   - `ANTHROPIC_KEY` or `ANTHROPIC_API_KEY`

@@ -447,7 +447,7 @@ async function buildWeatherResponse(targetDate) {
   const weather = await fetchDailyWeather(targetDate).catch(() => null);
 
   if (!weather) {
-    return 'Weather is not configured yet. Add WEATHER_LATITUDE, WEATHER_LONGITUDE, and WEATHER_TIMEZONE to .env.';
+    return 'Weather unavailable. Auto-detection may have failed — check your network connection.';
   }
 
   const lines = [`Weather for ${targetDate.toDateString()}:`, formatWeather(weather)];
@@ -496,11 +496,6 @@ async function buildConflictsResponse(targetDate) {
 
 async function buildStatusResponse(targetDate) {
   const weather = await fetchDailyWeather(targetDate).catch(() => null);
-  const weatherConfigured = Boolean(
-    process.env.WEATHER_LATITUDE &&
-    process.env.WEATHER_LONGITUDE &&
-    process.env.WEATHER_TIMEZONE
-  );
   const alertsEnabled = Boolean(process.env.ALERT_LEAD_MINUTES || process.env.ALERT_WINDOW_MINUTES);
 
   let calendarOk = true;
@@ -522,8 +517,7 @@ async function buildStatusResponse(targetDate) {
     `Calendar access: ${calendarOk ? 'OK' : 'Error'}`,
     `Today event count: ${calendarOk ? eventCount : 'Unavailable'}`,
     `Conflict count: ${calendarOk ? conflictCount : 'Unavailable'}`,
-    `Weather config: ${weatherConfigured ? 'Configured' : 'Missing config'}`,
-    `Weather fetch: ${weather ? 'OK' : 'Unavailable'}`,
+    `Weather: ${weather ? 'OK (auto-detected)' : 'Unavailable'}`,
     `Alert config: ${alertsEnabled ? 'Configured' : 'Missing config'}`,
     `Brain: ${isAiConfigured() ? 'Anthropic connected' : 'Not configured'}`,
     `Command mode: ${isAiConfigured() ? 'Hybrid deterministic + AI' : 'Deterministic commands active'}`

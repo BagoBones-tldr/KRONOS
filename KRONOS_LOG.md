@@ -641,3 +641,14 @@
   - `KRONOS_LOG.md`
   - `pi/deploy.sh`
 
+### 2026-04-23 02:24:51 PM CDT
+- Summary: `Add http-server to launchd and Pi deploy script`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `launchd/com.projectkronos.http-server.plist`
+  - `launchd/install-launchagents.sh`
+  - `launchd/run-http-server.sh`
+  - `launchd/uninstall-launchagents.sh`
+  - `pi/deploy.sh`
+

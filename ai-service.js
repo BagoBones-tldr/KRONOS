@@ -1,6 +1,8 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { buildKronosSystemPrompt, buildKronosPolicyLines } = require('./ai-policy');
 
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
+
 let client = null;
 
 function isAiConfigured() {
@@ -116,7 +118,7 @@ async function generateAiConversation(message, options = {}) {
   const system = buildConversationSystem(options);
 
   const response = await anthropic.messages.create({
-    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+    model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
     max_tokens: 220,
     temperature: 0.3,
     system,
@@ -134,7 +136,7 @@ async function generateAiConversation(message, options = {}) {
 async function requestAnthropicText(prompt, options = {}) {
   const anthropic = getAnthropicClient();
   const requestParams = {
-    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+    model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
     max_tokens: options.maxTokens || 320,
     temperature: options.temperature ?? 0.4,
     system: options.system || buildKronosSystemPrompt(),
