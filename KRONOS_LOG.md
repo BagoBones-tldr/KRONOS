@@ -652,3 +652,14 @@
   - `launchd/uninstall-launchagents.sh`
   - `pi/deploy.sh`
 
+### 2026-04-23 02:48:21 PM CDT
+- Summary: `DRY fixes and stale reference cleanup`
+- Branch: `main`
+- Files:
+  - `.env.example`
+  - `KRONOS_LOG.md`
+  - `KRONOS_RECOVERY.md`
+  - `ai-service.js`
+  - `command-service.js`
+  - `obsidian-service.js`
+

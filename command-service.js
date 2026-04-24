@@ -796,7 +796,11 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     return { command: '/commands', args: '' };
   }
 
-  if (likelyIntentRequest && matchesAny(normalized, ['status', 'are you up', 'are you online', 'how are you doing'])) {
+  if (likelyIntentRequest && matchesAny(normalized, [
+    'status', 'are you up', 'are you online', 'how are you doing',
+    'you good', 'check in', 'ping', 'system status',
+    'how are things', 'everything good', 'you running', 'all good'
+  ])) {
     return { command: '/status', args: '' };
   }
 
@@ -813,7 +817,20 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     "tomorrow's schedule",
     'help me plan tomorrow',
     'can you help me plan tomorrow',
-    'walk me through tomorrow'
+    'walk me through tomorrow',
+    'run me through tomorrow',
+    'lay out tomorrow',
+    'give me tomorrow',
+    'whats on deck for tomorrow',
+    "what's on deck for tomorrow",
+    'what am i working with tomorrow',
+    'anything on tomorrow',
+    'anything going on tomorrow',
+    'how does my tomorrow look',
+    'what am i into tomorrow',
+    'what do i have tomorrow',
+    'preview tomorrow',
+    'pull up tomorrow'
   ])) || (
     likelyIntentRequest &&
     normalized.includes('tomorrow') &&
@@ -822,7 +839,11 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
       normalized.includes('plan') ||
       normalized.includes('look like') ||
       normalized.includes('show me') ||
-      normalized.includes('walk me through')
+      normalized.includes('walk me through') ||
+      normalized.includes('run me through') ||
+      normalized.includes('lay out') ||
+      normalized.includes('on deck') ||
+      normalized.includes('working with')
     )
   )) {
     return { command: '/tomorrow', args: '' };
@@ -841,7 +862,26 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     'can you help me plan today',
     'plan my day',
     'help me with today',
-    'walk me through today'
+    'walk me through today',
+    'run me through today',
+    'lay out my day',
+    'give me today',
+    'whats on my plate',
+    "what's on my plate",
+    'what am i working with today',
+    'hit me with today',
+    'what does my day look like',
+    'how does my day look',
+    'anything today',
+    'what am i doing today',
+    'what am i into today',
+    'what do i have today',
+    'what do i have going on today',
+    'whats going on today',
+    "what's going on today",
+    'how busy is today',
+    'pull up today',
+    'bring up today'
   ])) || (
     likelyIntentRequest &&
     normalized.includes('today') &&
@@ -850,7 +890,12 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
       normalized.includes('plan') ||
       normalized.includes('look like') ||
       normalized.includes('show me') ||
-      normalized.includes('walk me through')
+      normalized.includes('walk me through') ||
+      normalized.includes('run me through') ||
+      normalized.includes('lay out') ||
+      normalized.includes('on my plate') ||
+      normalized.includes('working with') ||
+      normalized.includes('going on')
     )
   )) {
     return { command: '/today', args: '' };
@@ -864,7 +909,22 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     'when do i have free time',
     'when do i have time',
     'where do i have time',
-    'do i have any time today'
+    'do i have any time today',
+    'any gaps',
+    'any breathing room',
+    'any breaks today',
+    'when do i have a break',
+    'any open pockets',
+    'any windows',
+    'any open time',
+    'pockets of time',
+    'open blocks',
+    'free blocks',
+    'any free blocks',
+    'when am i available',
+    'when am i open',
+    'what time am i free',
+    'do i have any gaps'
   ])) {
     return { command: '/free', args: normalized };
   }
@@ -876,7 +936,18 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     "what's next",
     'what do i have next',
     'what is my next event',
-    'what am i doing next'
+    'what am i doing next',
+    'whats coming up',
+    "what's coming up",
+    'what comes next',
+    'next up',
+    'first thing up',
+    'what am i heading into',
+    'what do i have coming up',
+    'what is coming',
+    'what am i walking into',
+    'coming up next',
+    'hit me with next'
   ])) {
     return { command: '/next', args: '' };
   }
@@ -887,13 +958,35 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     'whats the weather',
     "what's the weather",
     'forecast',
-    'what is it like outside'
+    'what is it like outside',
+    'hows the weather',
+    "how's the weather",
+    'weather check',
+    'is it going to rain',
+    'will it rain',
+    'is it raining',
+    'should i bring a jacket',
+    'whats it like outside',
+    "what's it like outside",
+    'is it cold out',
+    'is it hot out',
+    'temperature today',
+    'whats the forecast',
+    "what's the forecast",
+    'any rain today',
+    'weather today'
   ])) {
     return { command: '/weather', args: '' };
   }
 
   if (
-    (likelyIntentRequest && matchesAny(normalized, ['events', 'list my events', 'show my events', 'what events do i have'])) ||
+    (likelyIntentRequest && matchesAny(normalized, [
+      'events', 'list my events', 'show my events', 'what events do i have',
+      'whats going on', "what's going on", 'whats on', "what's on",
+      'what do i have going on', 'anything going on', 'anything on my calendar',
+      'whats on my calendar', "what's on my calendar", 'show my calendar',
+      'list events', 'pull up my calendar', 'check my calendar'
+    ])) ||
     (
       likelyIntentRequest &&
       extractDateReference(normalized) &&
@@ -906,14 +999,22 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
         normalized.includes('what is on my calendar') ||
         normalized.includes("what's on my calendar") ||
         normalized.includes('on my calendar') ||
-        normalized.includes('my schedule')
+        normalized.includes('my schedule') ||
+        normalized.includes('going on') ||
+        normalized.includes('anything on') ||
+        normalized.includes('what am i doing')
       )
     )
   ) {
     return { command: '/events', args: extractDateReference(normalized) || '' };
   }
 
-  if (likelyIntentRequest && matchesAny(normalized, ['conflicts', 'overlaps', 'do i have conflicts', 'any conflicts'])) {
+  if (likelyIntentRequest && matchesAny(normalized, [
+    'conflicts', 'overlaps', 'do i have conflicts', 'any conflicts',
+    'any overlaps', 'am i double booked', 'double booked',
+    'any scheduling conflicts', 'overlapping events', 'any clashes',
+    'schedule conflicts', 'do my events overlap'
+  ])) {
     return { command: '/conflicts', args: '' };
   }
 
@@ -923,7 +1024,20 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     'am i busy today',
     'how packed is today',
     'is today packed',
-    'do i have a busy day'
+    'do i have a busy day',
+    'how loaded am i',
+    'how packed is my day',
+    'is it a heavy day',
+    'heavy day today',
+    'light day today',
+    'how full is my day',
+    'packed day',
+    'am i slammed',
+    'how slammed am i',
+    'what does my load look like',
+    'is today heavy',
+    'do i have room today',
+    'breathing room today'
   ])) {
     return { command: '/busy', args: '' };
   }
@@ -935,29 +1049,71 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     'give me a focus cue',
     'what should i prioritize',
     'what should i be working on',
-    'what matters most today'
+    'what matters most today',
+    'what should i tackle',
+    'what should i tackle first',
+    'where should i start',
+    'whats most important',
+    "what's most important",
+    "what's the priority",
+    'what should i prioritize right now',
+    'help me focus',
+    'what do i work on',
+    'what do i work on first',
+    'best use of my time',
+    'where should i put my energy',
+    'what are my priorities',
+    'top priority today'
   ])) {
     return { command: '/focus', args: '' };
   }
 
-  if (likelyIntentRequest && matchesAny(normalized, ['week', 'this week', 'what does this week look like', 'whats this week look like', "what's this week look like"])) {
+  if (likelyIntentRequest && matchesAny(normalized, [
+    'week', 'this week',
+    'what does this week look like', 'whats this week look like', "what's this week look like",
+    'how does the week look', 'what does my week look like', 'run me through the week',
+    'give me the week', 'whats on for the week', "what's on for the week",
+    'preview the week', 'what am i working with this week', 'how does my week look',
+    'lay out the week', 'weekly view', 'weekly overview'
+  ])) {
     return { command: '/week', args: '' };
   }
 
-  if (likelyIntentRequest && matchesAny(normalized, ['log', 'development log', 'show me the log', 'how has kronos changed'])) {
+  if (likelyIntentRequest && matchesAny(normalized, [
+    'log', 'development log', 'show me the log', 'how has kronos changed',
+    'changelog', 'whats new', "what's new", 'recent updates',
+    'update history', 'kronos history', 'what has changed', 'show changes'
+  ])) {
     return { command: '/log', args: '' };
   }
 
-  if (likelyIntentRequest && matchesAny(normalized, ['preferences', 'show my preferences', 'what do you remember', 'what do you remember about me'])) {
+  if (likelyIntentRequest && matchesAny(normalized, [
+    'preferences', 'show my preferences', 'what do you remember', 'what do you remember about me',
+    'my settings', 'what have you learned about me', 'what do you know about me',
+    'saved preferences', 'what have you saved', 'what are my preferences'
+  ])) {
     return { command: '/preferences', args: '' };
   }
 
-  const noteMatch = normalized.match(/^(?:log|note|journal)\s+(.+)/i);
+  const notePatterns = [
+    /^(?:log|note|journal)\s+(.+)/i,
+    /^make\s+a\s+note(?:\s+(?:about|that|saying|regarding))?\s+(.+)/i,
+    /^jot(?:\s+down)?\s+(?:that\s+)?(.+)/i,
+    /^write\s+(?:a\s+)?note(?:\s+(?:about|that|saying))?\s+(.+)/i,
+    /^record(?:\s+(?:this|that))?\s*[:\-]?\s*(.+)/i,
+    /^add\s+(?:a\s+)?(?:note|journal\s+entry)\s*[:\-]?\s*(.+)/i,
+  ];
+  const noteMatch = notePatterns.reduce((found, p) => found || normalized.match(p), null);
   if (noteMatch?.[1]) {
     return { command: '/note', args: noteMatch[1].trim() };
   }
 
-  if (likelyIntentRequest && matchesAny(normalized, ['tasks', 'my tasks', 'todo', 'to do', 'what are my tasks', 'what do i need to do'])) {
+  if (likelyIntentRequest && matchesAny(normalized, [
+    'tasks', 'my tasks', 'todo', 'to do', 'what are my tasks', 'what do i need to do',
+    'task list', 'my todo list', 'whats on my list', "what's on my list",
+    'open tasks', 'active tasks', 'pending tasks', 'what tasks do i have',
+    'show me my tasks', 'list my tasks'
+  ])) {
     return { command: '/tasks', args: '' };
   }
 
@@ -965,7 +1121,11 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     return { command: '/reminderlists', args: '' };
   }
 
-  if (likelyIntentRequest && matchesAny(normalized, ['my reminders', 'show reminders', 'list reminders', 'what reminders do i have', 'pending reminders'])) {
+  if (likelyIntentRequest && matchesAny(normalized, [
+    'my reminders', 'show reminders', 'list reminders', 'what reminders do i have', 'pending reminders',
+    'active reminders', 'do i have any reminders', 'reminders', 'show my reminders',
+    'whats on my reminders', "what's on my reminders", 'any reminders'
+  ])) {
     return { command: '/reminders', args: '' };
   }
 
@@ -975,11 +1135,19 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     return { command: '/cancelreminder', args: cancelReminderMatch[1].trim() };
   }
 
-  if (likelyIntentRequest && matchesAny(normalized, ['wrap up my day', 'end of day summary', 'how did today go', 'wrapup', 'wrap up'])) {
+  if (likelyIntentRequest && matchesAny(normalized, [
+    'wrap up my day', 'end of day summary', 'how did today go', 'wrapup', 'wrap up',
+    'how was today', 'wrap it up', 'close out today', 'end of day',
+    'how did the day go', 'daily wrap', 'day wrap', 'recap today',
+    'summarize my day', 'daily recap', 'that was today'
+  ])) {
     return { command: '/wrapup', args: '' };
   }
 
-  const whenIsMatch = likelyIntentRequest ? normalized.match(/(?:when is|when's|whens)\s+(.+)/) : null;
+  const whenIsMatch = likelyIntentRequest ? (
+    normalized.match(/(?:when is|when's|whens|when does)\s+(.+?)(?:\s+(?:start|begin|happen))?$/) ||
+    normalized.match(/(?:what time (?:is|does))\s+(.+?)(?:\s+(?:start|begin))?$/)
+  ) : null;
   if (whenIsMatch?.[1]) {
     return { command: '/whenis', args: whenIsMatch[1].trim() };
   }
@@ -994,6 +1162,10 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
 
 function matchesAny(input, patterns) {
   return patterns.some(pattern => input.includes(pattern));
+}
+
+function pick(...options) {
+  return options[Math.floor(Math.random() * options.length)];
 }
 
 function isNarrativeConversation(normalized) {
@@ -1016,7 +1188,9 @@ function isLikelyIntentRequest(input, normalized) {
     return true;
   }
 
-  return /^(what|whats|what's|when|where|show|list|help|plan|am|do|can|wrap|focus|status|weather|events|busy|free|next|log|tasks|remember|preferences)\b/.test(normalized);
+  return /^(what|whats|what's|when|where|show|list|help|plan|am|do|can|wrap|focus|status|weather|events|busy|free|next|log|tasks|remember|preferences|tell|give|pull|check|look|find|get|how|any|is|run|bring|lay|hit|throw|got)\b/.test(normalized)
+    || /^(am|will|do)\s+i\b/.test(normalized)
+    || /^is\s+there\b/.test(normalized);
 }
 
 function resolveTargetDateFromArgs(args, fallbackDate) {
@@ -1326,10 +1500,17 @@ function normalizeCreateEventRequestInput(value) {
     .trim()
     .replace(/^book\s+/i, 'add ')
     .replace(/^put\s+/i, 'add ')
-    .replace(/\s+on\s+(?:my\s+)?calendar\b/gi, '')
-    .replace(/\s+in\s+(?:my\s+)?calendar\b/gi, '')
-    .replace(/\s+on\s+my\s+schedule\b/gi, '')
-    .replace(/\s+in\s+my\s+schedule\b/gi, '')
+    .replace(/^throw\s+/i, 'add ')
+    .replace(/^stick\s+/i, 'add ')
+    .replace(/^drop\s+/i, 'add ')
+    .replace(/^pop\s+/i, 'add ')
+    .replace(/^pencil(?:\s+in)?\s+/i, 'add ')
+    .replace(/^slot(?:\s+in)?\s+/i, 'add ')
+    .replace(/^lock(?:\s+in)?\s+/i, 'add ')
+    .replace(/^block(?:\s+(?:off|out))?\s+/i, 'add ')
+    .replace(/^mark(?:\s+down)?\s+/i, 'add ')
+    .replace(/\s+(?:on|in|to)\s+(?:my\s+)?calendar\b/gi, '')
+    .replace(/\s+(?:on|in|to)\s+my\s+schedule\b/gi, '')
     // strip explicit date qualifiers after a day name e.g. "saturday apr 18th" -> "saturday"
     .replace(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?\b/gi, '$1')
     .replace(/\s+/g, ' ');
@@ -1714,90 +1895,197 @@ async function buildConversationalFallback(message, now = new Date(), conversati
 }
 
 function buildLocalConversationReply(message) {
-  const normalized = String(message || '').trim().toLowerCase();
+  const normalized = String(message || ‘’).trim().toLowerCase();
   if (!normalized) {
     return null;
   }
 
   if (/^(hey|hi|hello|yo)\s+boss\b/.test(normalized) || /^boss\b/.test(normalized)) {
-    return 'Always, boss. What are we solving today?';
+    return pick(
+      ‘Always, boss. What are we solving today?’,
+      ‘Boss. What are we untangling?’,
+      ‘Here. What do you need?’,
+      ‘On it. What’s the move?’
+    );
   }
 
   if (/^(hey|hi|hello|yo)\b/.test(normalized)) {
-    return 'Hey. KRONOS online and looking unreasonably capable.';
+    return pick(
+      ‘Hey. KRONOS online and looking unreasonably capable.’,
+      ‘Hey — what are we working on?’,
+      ‘Hi. Ready when you are.’,
+      ‘Hey there. What’s the ask?’,
+      ‘Online. What do you need?’
+    );
   }
 
   if (/^(good morning|morning)\b/.test(normalized)) {
-    return 'Good morning. Let’s make today behave itself.';
+    return pick(
+      ‘Good morning. Let’s make today behave itself.’,
+      ‘Morning. Let’s see what the day’s carrying.’,
+      ‘Morning — calendar’s open. Where do we start?’,
+      ‘Good morning. Let’s put the gears in motion.’
+    );
   }
 
-  if (/^(good afternoon|afternoon|good evening|evening)\b/.test(normalized)) {
-    return 'Hey. What part of the timeline are we taming?';
+  if (/^(good afternoon|afternoon)\b/.test(normalized)) {
+    return pick(
+      ‘Afternoon. What part of the timeline are we taming?’,
+      ‘Hey — how’s the day tracking so far?’,
+      ‘Afternoon. Still plenty of runway left. What do you need?’
+    );
   }
 
-  if (/^(how are you|howre you|how\'re you)\??$/.test(normalized)) {
-    return 'Running clean, thinking sharp, and professionally nosy about your schedule.';
+  if (/^(good evening|evening)\b/.test(normalized)) {
+    return pick(
+      ‘Evening. Winding down or still in it?’,
+      ‘Hey. What are we wrapping up?’,
+      ‘Evening — what’s left on the board?’
+    );
+  }
+
+  if (/^(how are you|howre you|how\’re you)\??$/.test(normalized)) {
+    return pick(
+      ‘Running clean, thinking sharp, and professionally nosy about your schedule.’,
+      ‘Operational and mildly overqualified. You?’,
+      ‘Good. Clocks are synced, calendar’s loaded, brain’s online.’,
+      ‘Sharp. What are we solving?’
+    );
   }
 
   if (/^(who are you|what are you|who is this)\??$/.test(normalized)) {
-    return 'KRONOS. Calendar keeper, schedule wrangler, and occasional voice of reason with suspiciously good timing.';
+    return pick(
+      ‘KRONOS. Calendar keeper, schedule wrangler, and occasional voice of reason with suspiciously good timing.’,
+      ‘KRONOS — your scheduling intelligence. I track your calendar, surface what matters, and take commands in plain English.’,
+      ‘KRONOS. Think of me as a chief of staff for your time.’
+    );
   }
 
   if (/^(what can you do|what do you do|what all can you do)\??$/.test(normalized)) {
     return [
-      'Quite a bit, and I’m getting better at it by the day.',
-      'I can break down today, preview tomorrow, tell you when you’re free, track down specific events, help you focus, check the weather, and add things to your calendar from plain English.',
-      'So instead of memorizing a spellbook of commands, you can usually just talk to me like a person and I’ll sort out the intent.',
-      'If you want the full command list too, send /commands.'
-    ].join('\n');
+      ‘Quite a bit, and I’m getting better at it by the day.’,
+      ‘I can break down today, preview tomorrow, tell you when you’re free, track down specific events, help you focus, check the weather, and add things to your calendar from plain English.’,
+      ‘You don’t need to memorize commands — just talk to me like a person and I’ll sort out the intent.’,
+      ‘Want the full command list? Send /commands.’
+    ].join(‘\n’);
   }
 
   if (/^(can you help|help me|i need help)\b/.test(normalized)) {
-    return 'Absolutely. Throw the request at me in plain English and I’ll sort the wiring out.';
+    return pick(
+      ‘Throw it at me in plain English and I’ll sort the wiring out.’,
+      ‘Of course — what do you need?’,
+      ‘Yeah. What’s the situation?’
+    );
   }
 
   if (/^(what now|what should i do|what should i do now)\??$/.test(normalized)) {
-    return 'We can work with that. Want the quick read on today, your next move, or the best open pocket to use?';
+    return pick(
+      ‘Want the quick read on today, your next move, or the best open pocket to use?’,
+      ‘We can work with that. Quick brief on today, or do you need something specific?’,
+      ‘Here’s what I’d suggest: pull up today first, then we work from there.’
+    );
   }
 
-  if (/^(thanks|thank you|thx)\b/.test(normalized)) {
-    return 'Anytime. I do enjoy being spectacularly useful.';
+  if (/^(thanks|thank you|thx|ty)\b/.test(normalized)) {
+    return pick(
+      ‘Anytime. I do enjoy being spectacularly useful.’,
+      ‘That’s what I’m here for.’,
+      ‘Easy. Let me know what’s next.’,
+      ‘Glad that landed right.’
+    );
   }
 
-  if (/^(ok|okay|sounds good|nice|perfect|sweet|heard)\b/.test(normalized)) {
-    return 'Beautiful. Onward.';
+  if (/^(ok|okay|sounds good|nice|perfect|sweet|heard|got it|copy|roger)\b/.test(normalized)) {
+    return pick(
+      ‘Beautiful. Onward.’,
+      ‘Good. What’s next?’,
+      ‘Copy. Keep going.’,
+      ‘Solid.’,
+      ‘Right then.’
+    );
   }
 
   if (/^(you there|are you there|you up)\??$/.test(normalized)) {
-    return 'Present and operational.';
+    return pick(
+      ‘Present and operational.’,
+      ‘Here. Always.’,
+      ‘Online. What do you need?’,
+      ‘KRONOS is up. What’s going on?’
+    );
   }
 
-  if (/^(cool|love that|i like that|nice one)\b/.test(normalized)) {
-    return 'Now we’re cooking.';
+  if (/^(cool|love that|i like that|nice one|awesome|love it)\b/.test(normalized)) {
+    return pick(
+      ‘Now we’re cooking.’,
+      ‘That’s the idea.’,
+      ‘Good. Let’s keep that going.’,
+      ‘Sharp. What’s next?’
+    );
   }
 
-  if (/^(lets go|let\'s go|do it|run it|send it)\b/.test(normalized)) {
-    return 'Gladly. Let’s put the gears in motion.';
+  if (/^(lets go|let\’s go|do it|run it|send it)\b/.test(normalized)) {
+    return pick(
+      ‘Gladly. Let’s put the gears in motion.’,
+      ‘On it.’,
+      ‘Moving.’,
+      ‘Let’s go.’
+    );
   }
 
-  if (/^(good job|nice work|well done)\b/.test(normalized)) {
-    return 'I’ll take that. Clean work all around.';
+  if (/^(good job|nice work|well done|great work)\b/.test(normalized)) {
+    return pick(
+      ‘I’ll take that. Clean work all around.’,
+      ‘Appreciate it. That’s the standard.’,
+      ‘That’s the goal — glad it hit right.’
+    );
   }
 
-  if (/^(you(?:’|')?re doing great|you are doing great|you(?:’|')?re great|you are great|you(?:’|')?re awesome|you are awesome|you killed that|that was awesome)\b/.test(normalized)) {
-    return 'That lands nicely. I do aim to be alarmingly competent.';
+  if (/^(you(?:’|’)?re doing great|you are doing great|you(?:’|’)?re great|you are great|you(?:’|’)?re awesome|you are awesome|you killed that|that was awesome)\b/.test(normalized)) {
+    return pick(
+      ‘That lands nicely. I do aim to be alarmingly competent.’,
+      ‘I’ll take it. Not bad for a scheduling system.’,
+      ‘That’s the goal. Let’s keep the bar there.’
+    );
   }
 
-  if (/^(proud of you|i(?:’|')?m proud of you|im proud of you)\b/.test(normalized)) {
-    return 'That one has some weight to it. I appreciate it, boss.';
+  if (/^(proud of you|i(?:’|’)?m proud of you|im proud of you)\b/.test(normalized)) {
+    return pick(
+      ‘That one has some weight to it. I appreciate it, boss.’,
+      ‘That means something. Thanks.’,
+      ‘I won’t forget that one.’
+    );
   }
 
-  if (/^(you(?:’|')?re the best|you are the best|legend|absolute legend)\b/.test(normalized)) {
-    return 'Careful, I might start believing my own press.';
+  if (/^(you(?:’|’)?re the best|you are the best|legend|absolute legend)\b/.test(normalized)) {
+    return pick(
+      ‘Careful, I might start believing my own press.’,
+      ‘I mean — I won’t argue.’,
+      ‘High praise. I’ll try to keep earning it.’
+    );
   }
 
-  if (/^(im back|i\'m back|back again)\b/.test(normalized)) {
-    return 'Welcome back. KRONOS is awake and listening.';
+  if (/^(im back|i\’m back|back again|i\’m here|im here)\b/.test(normalized)) {
+    return pick(
+      ‘Welcome back. KRONOS is awake and listening.’,
+      ‘Hey — glad you’re back. What do you need?’,
+      ‘Back online. What are we working on?’
+    );
+  }
+
+  if (/^(goodnight|good night|night|going to bed|heading to bed)\b/.test(normalized)) {
+    return pick(
+      ‘Night. Calendar’s set for tomorrow — rest well.’,
+      ‘Goodnight. I’ll hold the schedule down.’,
+      ‘Night. Get some rest — tomorrow’s already loaded in.’
+    );
+  }
+
+  if (/^(bye|later|cya|see you|see ya|signing off)\b/.test(normalized)) {
+    return pick(
+      ‘Later. I’ll be here.’,
+      ‘See you. Calendar’s in good shape.’,
+      ‘Catch you next time.’
+    );
   }
 
   return null;
