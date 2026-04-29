@@ -603,7 +603,7 @@ async function buildRememberResponse(input, preferences) {
 
   const nextPreferences = applyPreferenceUpdate(preferences, update);
   await savePreferences(nextPreferences);
-  return update.confirmation || 'Locked in. I’ll remember that going forward.';
+  return update.confirmation || 'Locked in. I\'ll remember that going forward.';
 }
 
 async function buildNoteResponse(input) {
@@ -622,7 +622,7 @@ async function buildNoteResponse(input) {
 function buildPreferencesResponse(preferences) {
   const lines = formatPreferences(preferences);
   if (lines.length === 0) {
-    return 'No saved preferences yet. Tell me something explicit to remember and I’ll keep it.';
+    return 'No saved preferences yet. Tell me something explicit to remember and I\'ll keep it.';
   }
 
   return ['Saved preferences:', ...lines.map(line => `• ${escapeHtml(line)}`)].join('\n');
@@ -1470,6 +1470,47 @@ function parseReminderRequest(input, now) {
     };
   }
 
+  // "remind me to TITLE at [time]" — defaults to today
+  match = text.match(/^(?:\/remind\s+|remind me to\s+|remind me\s+to\s+)(.+?)\s+at\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm))$/i);
+  if (match) {
+    const [, rawTitle, rawTime] = match;
+    const dueDate = parseTimeOnDate(rawTime, new Date(now));
+    if (!dueDate) {
+      return null;
+    }
+    return {
+      title: normalizeReminderTitle(rawTitle),
+      dueDate
+    };
+  }
+
+  // "add/set a reminder to/for TITLE [date] at [time]"
+  const addReminderDateGroup = '(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)';
+  match = text.match(new RegExp(`^(?:add|set)\\s+(?:a\\s+|an\\s+)?reminder\\s+(?:to|for)\\s+(.+?)\\s+${addReminderDateGroup}\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))$`, 'i'));
+  if (match) {
+    const [, rawTitle, rawDate, rawTime] = match;
+    const date = parseDateReference(rawDate, now);
+    const dueDate = parseTimeOnDate(rawTime, date);
+    if (!date || !dueDate) {
+      return null;
+    }
+    return {
+      title: normalizeReminderTitle(rawTitle),
+      dueDate
+    };
+  }
+
+  // "add/set a reminder to/for TITLE in X minutes/hours"
+  match = text.match(/^(?:add|set)\s+(?:a\s+|an\s+)?reminder\s+(?:to|for)\s+(.+?)\s+in\s+(\d+)(?:-\d+)?\s+(minutes?|minute|hours?|hrs?|hr)$/i);
+  if (match) {
+    const [, rawTitle, rawAmount, rawUnit] = match;
+    const dueDate = addMinutes(now, parseDurationMinutes(rawAmount, rawUnit));
+    return {
+      title: normalizeReminderTitle(rawTitle),
+      dueDate
+    };
+  }
+
   return null;
 }
 
@@ -1654,7 +1695,7 @@ function parsePreferenceUpdate(input) {
     return {
       type: 'nickname',
       value,
-      confirmation: `Locked in. I’ll remember to call you ${escapeHtml(value)}.`
+      confirmation: `Locked in. I'll remember to call you ${escapeHtml(value)}.`
     };
   }
 
@@ -1664,7 +1705,7 @@ function parsePreferenceUpdate(input) {
     return {
       type: 'workout_time',
       value,
-      confirmation: `Locked in. I’ll remember your preferred workout time is ${escapeHtml(value)}.`
+      confirmation: `Locked in. I'll remember your preferred workout time is ${escapeHtml(value)}.`
     };
   }
 
@@ -1674,7 +1715,7 @@ function parsePreferenceUpdate(input) {
     return {
       type: 'focus_style',
       value,
-      confirmation: `Got it. I’ll remember that your preferred focus style is ${escapeHtml(value)}.`
+      confirmation: `Got it. I'll remember that your preferred focus style is ${escapeHtml(value)}.`
     };
   }
 
@@ -1684,7 +1725,7 @@ function parsePreferenceUpdate(input) {
     return {
       type: 'planning_style',
       value,
-      confirmation: `Noted. I’ll remember that your planning style is ${escapeHtml(value)}.`
+      confirmation: `Noted. I'll remember that your planning style is ${escapeHtml(value)}.`
     };
   }
 
@@ -1694,7 +1735,7 @@ function parsePreferenceUpdate(input) {
     return {
       type: 'general_note',
       value,
-      confirmation: `Locked in. I’ll keep that in mind: ${escapeHtml(value)}.`
+      confirmation: `Locked in. I'll keep that in mind: ${escapeHtml(value)}.`
     };
   }
 
@@ -1895,196 +1936,196 @@ async function buildConversationalFallback(message, now = new Date(), conversati
 }
 
 function buildLocalConversationReply(message) {
-  const normalized = String(message || ‘’).trim().toLowerCase();
+  const normalized = String(message || "").trim().toLowerCase();
   if (!normalized) {
     return null;
   }
 
   if (/^(hey|hi|hello|yo)\s+boss\b/.test(normalized) || /^boss\b/.test(normalized)) {
     return pick(
-      ‘Always, boss. What are we solving today?’,
-      ‘Boss. What are we untangling?’,
-      ‘Here. What do you need?’,
-      ‘On it. What’s the move?’
+      "Always, boss. What are we solving today?",
+      "Boss. What are we untangling?",
+      "Here. What do you need?",
+      "On it. What's the move?"
     );
   }
 
   if (/^(hey|hi|hello|yo)\b/.test(normalized)) {
     return pick(
-      ‘Hey. KRONOS online and looking unreasonably capable.’,
-      ‘Hey — what are we working on?’,
-      ‘Hi. Ready when you are.’,
-      ‘Hey there. What’s the ask?’,
-      ‘Online. What do you need?’
+      "Hey. KRONOS online and looking unreasonably capable.",
+      "Hey — what are we working on?",
+      "Hi. Ready when you are.",
+      "Hey there. What's the ask?",
+      "Online. What do you need?"
     );
   }
 
   if (/^(good morning|morning)\b/.test(normalized)) {
     return pick(
-      ‘Good morning. Let’s make today behave itself.’,
-      ‘Morning. Let’s see what the day’s carrying.’,
-      ‘Morning — calendar’s open. Where do we start?’,
-      ‘Good morning. Let’s put the gears in motion.’
+      "Good morning. Let's make today behave itself.",
+      "Morning. Let's see what the day's carrying.",
+      "Morning — calendar's open. Where do we start?",
+      "Good morning. Let's put the gears in motion."
     );
   }
 
   if (/^(good afternoon|afternoon)\b/.test(normalized)) {
     return pick(
-      ‘Afternoon. What part of the timeline are we taming?’,
-      ‘Hey — how’s the day tracking so far?’,
-      ‘Afternoon. Still plenty of runway left. What do you need?’
+      "Afternoon. What part of the timeline are we taming?",
+      "Hey — how's the day tracking so far?",
+      "Afternoon. Still plenty of runway left. What do you need?"
     );
   }
 
   if (/^(good evening|evening)\b/.test(normalized)) {
     return pick(
-      ‘Evening. Winding down or still in it?’,
-      ‘Hey. What are we wrapping up?’,
-      ‘Evening — what’s left on the board?’
+      "Evening. Winding down or still in it?",
+      "Hey. What are we wrapping up?",
+      "Evening — what's left on the board?"
     );
   }
 
-  if (/^(how are you|howre you|how\’re you)\??$/.test(normalized)) {
+  if (/^(how are you|howre you|how\'re you)\??$/.test(normalized)) {
     return pick(
-      ‘Running clean, thinking sharp, and professionally nosy about your schedule.’,
-      ‘Operational and mildly overqualified. You?’,
-      ‘Good. Clocks are synced, calendar’s loaded, brain’s online.’,
-      ‘Sharp. What are we solving?’
+      "Running clean, thinking sharp, and professionally nosy about your schedule.",
+      "Operational and mildly overqualified. You?",
+      "Good. Clocks are synced, calendar's loaded, brain's online.",
+      "Sharp. What are we solving?"
     );
   }
 
   if (/^(who are you|what are you|who is this)\??$/.test(normalized)) {
     return pick(
-      ‘KRONOS. Calendar keeper, schedule wrangler, and occasional voice of reason with suspiciously good timing.’,
-      ‘KRONOS — your scheduling intelligence. I track your calendar, surface what matters, and take commands in plain English.’,
-      ‘KRONOS. Think of me as a chief of staff for your time.’
+      "KRONOS. Calendar keeper, schedule wrangler, and occasional voice of reason with suspiciously good timing.",
+      "KRONOS — your scheduling intelligence. I track your calendar, surface what matters, and take commands in plain English.",
+      "KRONOS. Think of me as a chief of staff for your time."
     );
   }
 
   if (/^(what can you do|what do you do|what all can you do)\??$/.test(normalized)) {
     return [
-      ‘Quite a bit, and I’m getting better at it by the day.’,
-      ‘I can break down today, preview tomorrow, tell you when you’re free, track down specific events, help you focus, check the weather, and add things to your calendar from plain English.’,
-      ‘You don’t need to memorize commands — just talk to me like a person and I’ll sort out the intent.’,
-      ‘Want the full command list? Send /commands.’
-    ].join(‘\n’);
+      "Quite a bit, and I'm getting better at it by the day.",
+      "I can break down today, preview tomorrow, tell you when you're free, track down specific events, help you focus, check the weather, and add things to your calendar from plain English.",
+      "You don't need to memorize commands — just talk to me like a person and I'll sort out the intent.",
+      "Want the full command list? Send /commands."
+    ].join("\n");
   }
 
   if (/^(can you help|help me|i need help)\b/.test(normalized)) {
     return pick(
-      ‘Throw it at me in plain English and I’ll sort the wiring out.’,
-      ‘Of course — what do you need?’,
-      ‘Yeah. What’s the situation?’
+      "Throw it at me in plain English and I'll sort the wiring out.",
+      "Of course — what do you need?",
+      "Yeah. What's the situation?"
     );
   }
 
   if (/^(what now|what should i do|what should i do now)\??$/.test(normalized)) {
     return pick(
-      ‘Want the quick read on today, your next move, or the best open pocket to use?’,
-      ‘We can work with that. Quick brief on today, or do you need something specific?’,
-      ‘Here’s what I’d suggest: pull up today first, then we work from there.’
+      "Want the quick read on today, your next move, or the best open pocket to use?",
+      "We can work with that. Quick brief on today, or do you need something specific?",
+      "Here's what I'd suggest: pull up today first, then we work from there."
     );
   }
 
   if (/^(thanks|thank you|thx|ty)\b/.test(normalized)) {
     return pick(
-      ‘Anytime. I do enjoy being spectacularly useful.’,
-      ‘That’s what I’m here for.’,
-      ‘Easy. Let me know what’s next.’,
-      ‘Glad that landed right.’
+      "Anytime. I do enjoy being spectacularly useful.",
+      "That's what I'm here for.",
+      "Easy. Let me know what's next.",
+      "Glad that landed right."
     );
   }
 
   if (/^(ok|okay|sounds good|nice|perfect|sweet|heard|got it|copy|roger)\b/.test(normalized)) {
     return pick(
-      ‘Beautiful. Onward.’,
-      ‘Good. What’s next?’,
-      ‘Copy. Keep going.’,
-      ‘Solid.’,
-      ‘Right then.’
+      "Beautiful. Onward.",
+      "Good. What's next?",
+      "Copy. Keep going.",
+      "Solid.",
+      "Right then."
     );
   }
 
   if (/^(you there|are you there|you up)\??$/.test(normalized)) {
     return pick(
-      ‘Present and operational.’,
-      ‘Here. Always.’,
-      ‘Online. What do you need?’,
-      ‘KRONOS is up. What’s going on?’
+      "Present and operational.",
+      "Here. Always.",
+      "Online. What do you need?",
+      "KRONOS is up. What's going on?"
     );
   }
 
   if (/^(cool|love that|i like that|nice one|awesome|love it)\b/.test(normalized)) {
     return pick(
-      ‘Now we’re cooking.’,
-      ‘That’s the idea.’,
-      ‘Good. Let’s keep that going.’,
-      ‘Sharp. What’s next?’
+      "Now we're cooking.",
+      "That's the idea.",
+      "Good. Let's keep that going.",
+      "Sharp. What's next?"
     );
   }
 
-  if (/^(lets go|let\’s go|do it|run it|send it)\b/.test(normalized)) {
+  if (/^(lets go|let\'s go|do it|run it|send it)\b/.test(normalized)) {
     return pick(
-      ‘Gladly. Let’s put the gears in motion.’,
-      ‘On it.’,
-      ‘Moving.’,
-      ‘Let’s go.’
+      "Gladly. Let's put the gears in motion.",
+      "On it.",
+      "Moving.",
+      "Let's go."
     );
   }
 
   if (/^(good job|nice work|well done|great work)\b/.test(normalized)) {
     return pick(
-      ‘I’ll take that. Clean work all around.’,
-      ‘Appreciate it. That’s the standard.’,
-      ‘That’s the goal — glad it hit right.’
+      "I'll take that. Clean work all around.",
+      "Appreciate it. That's the standard.",
+      "That's the goal — glad it hit right."
     );
   }
 
-  if (/^(you(?:’|’)?re doing great|you are doing great|you(?:’|’)?re great|you are great|you(?:’|’)?re awesome|you are awesome|you killed that|that was awesome)\b/.test(normalized)) {
+  if (/^(you(?:'|\')?re doing great|you are doing great|you(?:\'|\')?re great|you are great|you(?:\'|\')?re awesome|you are awesome|you killed that|that was awesome)\b/.test(normalized)) {
     return pick(
-      ‘That lands nicely. I do aim to be alarmingly competent.’,
-      ‘I’ll take it. Not bad for a scheduling system.’,
-      ‘That’s the goal. Let’s keep the bar there.’
+      "That lands nicely. I do aim to be alarmingly competent.",
+      "I'll take it. Not bad for a scheduling system.",
+      "That's the goal. Let's keep the bar there."
     );
   }
 
-  if (/^(proud of you|i(?:’|’)?m proud of you|im proud of you)\b/.test(normalized)) {
+  if (/^(proud of you|i(?:'|\')?m proud of you|im proud of you)\b/.test(normalized)) {
     return pick(
-      ‘That one has some weight to it. I appreciate it, boss.’,
-      ‘That means something. Thanks.’,
-      ‘I won’t forget that one.’
+      "That one has some weight to it. I appreciate it, boss.",
+      "That means something. Thanks.",
+      "I won't forget that one."
     );
   }
 
-  if (/^(you(?:’|’)?re the best|you are the best|legend|absolute legend)\b/.test(normalized)) {
+  if (/^(you(?:'|\')?re the best|you are the best|legend|absolute legend)\b/.test(normalized)) {
     return pick(
-      ‘Careful, I might start believing my own press.’,
-      ‘I mean — I won’t argue.’,
-      ‘High praise. I’ll try to keep earning it.’
+      "Careful, I might start believing my own press.",
+      "I mean — I won't argue.",
+      "High praise. I'll try to keep earning it."
     );
   }
 
-  if (/^(im back|i\’m back|back again|i\’m here|im here)\b/.test(normalized)) {
+  if (/^(im back|i\'m back|back again|i\'m here|im here)\b/.test(normalized)) {
     return pick(
-      ‘Welcome back. KRONOS is awake and listening.’,
-      ‘Hey — glad you’re back. What do you need?’,
-      ‘Back online. What are we working on?’
+      "Welcome back. KRONOS is awake and listening.",
+      "Hey — glad you're back. What do you need?",
+      "Back online. What are we working on?"
     );
   }
 
   if (/^(goodnight|good night|night|going to bed|heading to bed)\b/.test(normalized)) {
     return pick(
-      ‘Night. Calendar’s set for tomorrow — rest well.’,
-      ‘Goodnight. I’ll hold the schedule down.’,
-      ‘Night. Get some rest — tomorrow’s already loaded in.’
+      "Night. Calendar's set for tomorrow — rest well.",
+      "Goodnight. I'll hold the schedule down.",
+      "Night. Get some rest — tomorrow's already loaded in."
     );
   }
 
   if (/^(bye|later|cya|see you|see ya|signing off)\b/.test(normalized)) {
     return pick(
-      ‘Later. I’ll be here.’,
-      ‘See you. Calendar’s in good shape.’,
-      ‘Catch you next time.’
+      "Later. I'll be here.",
+      "See you. Calendar's in good shape.",
+      "Catch you next time."
     );
   }
 

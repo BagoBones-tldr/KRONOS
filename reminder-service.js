@@ -23,11 +23,15 @@ async function fetchDueReminders() {
       continue;
     }
 
+    const maxStalenessMs = (Number(process.env.REMINDER_STALE_HOURS) || 4) * 60 * 60 * 1000;
+    const stalenessCutoff = new Date(now.getTime() - maxStalenessMs);
+
     for (const obj of objects) {
       if (!obj.data) continue;
       const vtodo = parseVtodo(obj.data);
       if (!vtodo || !vtodo.uid || !vtodo.due) continue;
       if (vtodo.due > now) continue;
+      if (vtodo.due < stalenessCutoff) continue;
       if (vtodo.status === 'COMPLETED' || vtodo.status === 'CANCELLED') continue;
 
       due.push({ vtodo, calendarObject: obj });

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { getKronosNotesDir } = require('./runtime-paths');
 
-const DEFAULT_TIMEZONE = DEFAULT_TIMEZONE;
+const DEFAULT_TIMEZONE = process.env.BRIEFING_TIMEZONE || 'America/Chicago';
 
 function journalDir() {
   return path.join(getKronosNotesDir(), 'dev-journal');
