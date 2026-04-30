@@ -1205,7 +1205,9 @@ function resolveTargetDateFromArgs(args, fallbackDate) {
 function parseCreateEventRequest(input, now) {
   const text = normalizeCreateEventRequestInput(input);
   const addPrefix = String.raw`(?:\/add\s+|add\s+|create\s+|schedule\s+|book\s+|put\s+|set\s+(?:an?\s+)?(?:alarm|event|reminder|meeting)?\s*)`;
-  const atMatch = text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))(?:\\s+for\\s+(\\d+)\\s*(minutes?|minute|hours?|hrs?|hr))?$`, 'i'));
+  const durAmount = String.raw`(half\s+an?\s+|an?\s+|\d+)\s*`;
+  const durUnit   = String.raw`(minutes?|minute|hours?|hrs?|hr)`;
+  const atMatch = text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))(?:\\s+for\\s+${durAmount}${durUnit})?$`, 'i'));
   if (atMatch) {
     const [, rawTitle, rawDate, rawTime, rawAmount, rawUnit] = atMatch;
     const date = parseDateReference(rawDate, now);
@@ -1223,7 +1225,7 @@ function parseCreateEventRequest(input, now) {
     };
   }
 
-  const timeFirstAtMatch = text.match(new RegExp(`^${addPrefix}(?:my\\s+|the\\s+)?(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))\\s+(.+?)\\s+(?:on\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?:\\s+for\\s+(\\d+)\\s*(minutes?|minute|hours?|hrs?|hr))?$`, 'i'));
+  const timeFirstAtMatch = text.match(new RegExp(`^${addPrefix}(?:my\\s+|the\\s+)?(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))\\s+(.+?)\\s+(?:on\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?:\\s+for\\s+${durAmount}${durUnit})?$`, 'i'));
   if (timeFirstAtMatch) {
     const [, rawTime, rawTitle, rawDate, rawAmount, rawUnit] = timeFirstAtMatch;
     const date = parseDateReference(rawDate, now);
@@ -1539,6 +1541,12 @@ function normalizeTaskDescription(value) {
 function normalizeCreateEventRequestInput(value) {
   return String(value || '')
     .trim()
+    .replace(/^(?:i want to|i need to|i'd like to|can you|could you|would you|please|i need you to|i'd like you to)\s+/i, '')
+    .replace(/\btonight\b/gi, 'today')
+    .replace(/\bthis\s+(morning|afternoon|evening)\b/gi, 'today')
+    .replace(/\bthis\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi, '$1')
+    .replace(/\bnoon\b/gi, '12pm')
+    .replace(/\bmidnight\b/gi, '12am')
     .replace(/^book\s+/i, 'add ')
     .replace(/^put\s+/i, 'add ')
     .replace(/^throw\s+/i, 'add ')
@@ -1868,14 +1876,22 @@ function parseTimeOnDate(value, date) {
 }
 
 function parseDurationMinutes(amount, unit) {
-  const numeric = Number(amount || 60);
-  const normalizedUnit = String(unit || 'minutes').toLowerCase();
-
-  if (normalizedUnit.startsWith('hour') || normalizedUnit.startsWith('hr')) {
-    return numeric * 60;
+  const raw = String(amount || '').trim().toLowerCase();
+  let numeric;
+  if (raw.startsWith('half')) {
+    numeric = 0.5;
+  } else if (raw === 'a' || raw === 'an') {
+    numeric = 1;
+  } else {
+    numeric = Number(raw) || 60;
   }
 
-  return numeric;
+  const normalizedUnit = String(unit || 'minutes').toLowerCase();
+  if (normalizedUnit.startsWith('hour') || normalizedUnit.startsWith('hr')) {
+    return Math.round(numeric * 60);
+  }
+
+  return Math.round(numeric);
 }
 
 function addMinutes(baseDate, minutes) {
