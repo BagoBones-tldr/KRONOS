@@ -744,7 +744,9 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     .toLowerCase()
     .replace(/[?!.,"']/g, ' ')
     .replace(/\s+/g, ' ')
-    .trim();
+    .trim()
+    .replace(/\s+please$/, '')
+    .replace(/^please\s+/, '');
   const likelyIntentRequest = isLikelyIntentRequest(input, normalized);
 
   if (!normalized) {
@@ -979,6 +981,7 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     return { command: '/weather', args: '' };
   }
 
+  const eventsDateRef = extractDateReference(normalized);
   if (
     (likelyIntentRequest && matchesAny(normalized, [
       'events', 'list my events', 'show my events', 'what events do i have',
@@ -989,7 +992,7 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
     ])) ||
     (
       likelyIntentRequest &&
-      extractDateReference(normalized) &&
+      eventsDateRef &&
       (
         normalized.includes('show me my') ||
         normalized.includes('show me') ||
@@ -1002,11 +1005,16 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
         normalized.includes('my schedule') ||
         normalized.includes('going on') ||
         normalized.includes('anything on') ||
-        normalized.includes('what am i doing')
+        normalized.includes('what am i doing') ||
+        normalized.includes('look like') ||
+        normalized.includes('how does') ||
+        normalized.includes('how is') ||
+        normalized.includes('what is') ||
+        normalized.includes("what's")
       )
     )
   ) {
-    return { command: '/events', args: extractDateReference(normalized) || '' };
+    return { command: '/events', args: eventsDateRef || '' };
   }
 
   if (likelyIntentRequest && matchesAny(normalized, [
@@ -1188,7 +1196,7 @@ function isLikelyIntentRequest(input, normalized) {
     return true;
   }
 
-  return /^(what|whats|what's|when|where|show|list|help|plan|am|do|can|wrap|focus|status|weather|events|busy|free|next|log|tasks|remember|preferences|tell|give|pull|check|look|find|get|how|any|is|run|bring|lay|hit|throw|got)\b/.test(normalized)
+  return /^(what|whats|what's|when|where|show|list|help|plan|am|do|can|wrap|focus|status|weather|events|busy|free|next|log|tasks|remember|preferences|tell|give|pull|check|look|find|get|how|any|anything|is|run|bring|lay|hit|throw|got|anything)\b/.test(normalized)
     || /^(am|will|do)\s+i\b/.test(normalized)
     || /^is\s+there\b/.test(normalized);
 }
@@ -1373,7 +1381,10 @@ function parseTaskRemoveRequest(input) {
 }
 
 function parseReminderRequest(input, now) {
-  const text = String(input || '').trim();
+  const text = String(input || '').trim()
+    .replace(/^(?:i want you to|can you|could you|please|would you)\s+/i, '')
+    .replace(/^(?:don't let me forget to|don't forget to|i need to remember to|i need to remember)\s+/i, 'remind me to ')
+    .replace(/^remind me about\s+/i, 'remind me to ');
 
   // "remind me in X minutes to TITLE" or "remind me in X-Y minutes to TITLE"
   let match = text.match(/^(?:\/remind\s+|remind me\s+)in\s+(\d+)(?:-\d+)?\s+(minutes?|minute|hours?|hrs?|hr)\s+to\s+(.+)$/i);
@@ -1542,7 +1553,11 @@ function normalizeCreateEventRequestInput(value) {
   return String(value || '')
     .trim()
     .replace(/^(?:i want to|i need to|i'd like to|can you|could you|would you|please|i need you to|i'd like you to)\s+/i, '')
-    .replace(/\btonight\b/gi, 'today')
+    .replace(/\btonight\b/gi, 'today at 8pm')
+    .replace(/\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+morning\b/gi, '$1 at 9am')
+    .replace(/\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+afternoon\b/gi, '$1 at 1pm')
+    .replace(/\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+evening\b/gi, '$1 at 6pm')
+    .replace(/\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+night\b/gi, '$1 at 8pm')
     .replace(/\bthis\s+(morning|afternoon|evening)\b/gi, 'today')
     .replace(/\bthis\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi, '$1')
     .replace(/\bnoon\b/gi, '12pm')
@@ -1684,13 +1699,18 @@ function normalizeRemovalTitleQuery(value) {
 function normalizeRemovalRequestInput(value) {
   return String(value || '')
     .trim()
+    .replace(/^(?:i want to|can you|could you|would you|please)\s+/i, '')
+    .replace(/\s+please\b/gi, '')
+    .replace(/\s+for me\b/gi, '')
     .replace(/^get rid of\s+/i, 'remove ')
     .replace(/^drop\s+/i, 'remove ')
     .replace(/^take\s+/i, 'remove ')
+    .replace(/^clear\s+/i, 'remove ')
+    .replace(/^wipe\s+/i, 'remove ')
+    .replace(/^scratch\s+/i, 'remove ')
     .replace(/\s+off\s+(?:my\s+)?calendar\b/gi, '')
     .replace(/\s+off\s+my\s+schedule\b/gi, '')
-    .replace(/\s+from\s+(?:my\s+)?calendar\b/gi, '')
-    .replace(/\s+from\s+my\s+schedule\b/gi, '')
+    .replace(/\s+from\s+(?:my\s+)?(?:calendar|events|schedule)\b/gi, '')
     .replace(/\s+/g, ' ');
 }
 
@@ -1806,7 +1826,10 @@ function parseAvailabilityRequest(input, now) {
 }
 
 function parseDateReference(value, baseDate = new Date()) {
-  const normalized = String(value || '').trim().toLowerCase();
+  const raw = String(value || '').trim().toLowerCase()
+    .replace(/^tonight$/, 'today')
+    .replace(/^this\s+(?:morning|afternoon|evening|night)$/, 'today');
+  const normalized = raw;
   const date = new Date(baseDate);
   date.setHours(0, 0, 0, 0);
 
@@ -1819,9 +1842,22 @@ function parseDateReference(value, baseDate = new Date()) {
     return date;
   }
 
+  if (normalized === 'this weekend' || normalized === 'weekend') {
+    const dow = date.getDay();
+    date.setDate(date.getDate() + ((6 - dow + 7) % 7 || 7));
+    return date;
+  }
+
+  if (normalized === 'next weekend') {
+    const dow = date.getDay();
+    date.setDate(date.getDate() + ((6 - dow + 7) % 7 || 7) + 7);
+    return date;
+  }
+
   const weekdayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const nextMatch = normalized.match(/^next\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)$/);
-  const directName = nextMatch ? nextMatch[1] : normalized;
+  const thisMatch = normalized.match(/^this\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)$/);
+  const directName = nextMatch ? nextMatch[1] : thisMatch ? thisMatch[1] : normalized;
   const targetIndex = weekdayNames.indexOf(directName);
 
   if (targetIndex >= 0) {
@@ -1840,7 +1876,7 @@ function parseDateReference(value, baseDate = new Date()) {
 function extractDateReference(value) {
   const match = String(value || '')
     .toLowerCase()
-    .match(/\b(today|tomorrow|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/);
+    .match(/\b(tonight|this weekend|next weekend|today|tomorrow|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|this\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/);
 
   return match ? match[1] : null;
 }
