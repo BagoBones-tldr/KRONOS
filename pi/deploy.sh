@@ -130,9 +130,11 @@ EOF
 ok "Written: kronos-alerts.service"
 
 # kronos-daily.service + timer
-# systemd timers are the Linux equivalent of launchd scheduled jobs.
-# The .service defines what to run. The .timer defines when to run it.
-# We use OnCalendar=*-*-* 08:00:00 to run at 8am every day.
+# daily-clean.js uses --scheduled to self-gate: it checks the current hour against
+# BRIEFING_HOUR (from .env) and exits silently if it's not time yet. This mirrors
+# the Mac launchd setup, which also runs every 15 minutes with --scheduled.
+# Running every 15 minutes means BRIEFING_HOUR from .env is respected — unlike a
+# one-shot timer which would require a hardcoded time that ignores the env var.
 sudo tee "$SERVICE_DIR/kronos-daily.service" > /dev/null <<EOF
 [Unit]
 Description=KRONOS Daily Briefing
@@ -142,7 +144,7 @@ Type=oneshot
 User=$USER
 WorkingDirectory=$ROOT
 EnvironmentFile=$ROOT/.env
-ExecStart=$NODE $ROOT/daily-clean.js
+ExecStart=$NODE $ROOT/daily-clean.js --scheduled
 StandardOutput=append:$ROOT/daily-briefing.log
 StandardError=append:$ROOT/daily-briefing.log
 EOF
@@ -152,7 +154,7 @@ sudo tee "$SERVICE_DIR/kronos-daily.timer" > /dev/null <<EOF
 Description=KRONOS Daily Briefing Timer
 
 [Timer]
-OnCalendar=*-*-* 08:00:00
+OnCalendar=*-*-* *:00,15,30,45:00
 Persistent=true
 
 [Install]
@@ -160,6 +162,38 @@ WantedBy=timers.target
 EOF
 
 ok "Written: kronos-daily.service + kronos-daily.timer"
+
+# kronos-eod.service + timer
+# end-of-day.js uses --scheduled to self-gate against WRAPUP_HOUR (default 21).
+# Same pattern as the daily briefing: runs every 15 minutes, sends only at the
+# right hour. Mirrors the Mac launchd end-of-day setup exactly.
+sudo tee "$SERVICE_DIR/kronos-eod.service" > /dev/null <<EOF
+[Unit]
+Description=KRONOS End-of-Day Wrap-Up
+
+[Service]
+Type=oneshot
+User=$USER
+WorkingDirectory=$ROOT
+EnvironmentFile=$ROOT/.env
+ExecStart=$NODE $ROOT/end-of-day.js --scheduled
+StandardOutput=append:$ROOT/end-of-day.log
+StandardError=append:$ROOT/end-of-day.log
+EOF
+
+sudo tee "$SERVICE_DIR/kronos-eod.timer" > /dev/null <<EOF
+[Unit]
+Description=KRONOS End-of-Day Wrap-Up Timer
+
+[Timer]
+OnCalendar=*-*-* *:00,15,30,45:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+ok "Written: kronos-eod.service + kronos-eod.timer"
 
 # kronos-http.service
 # Keeps the HTTP chat endpoint (POST /chat) alive permanently.
@@ -195,10 +229,10 @@ step "Enabling and starting services"
 sudo systemctl daemon-reload
 ok "systemd reloaded"
 
-sudo systemctl enable kronos-telegram kronos-alerts kronos-http kronos-daily.timer
+sudo systemctl enable kronos-telegram kronos-alerts kronos-http kronos-daily.timer kronos-eod.timer
 ok "Services enabled (will start on boot)"
 
-sudo systemctl start kronos-telegram kronos-alerts kronos-http kronos-daily.timer
+sudo systemctl start kronos-telegram kronos-alerts kronos-http kronos-daily.timer kronos-eod.timer
 ok "Services started"
 
 # ── 6. Status report ──────────────────────────────────────────────────────────
@@ -216,7 +250,13 @@ echo "  sudo systemctl status kronos-telegram       # check status"
 echo "  sudo systemctl restart kronos-telegram      # restart after code change"
 echo "  journalctl -u kronos-telegram -f            # follow logs via systemd"
 echo "  tail -f $ROOT/telegram-commands.log         # follow file logs"
+echo "  systemctl list-timers --all                 # verify daily + eod timers"
 echo ""
 echo "To update KRONOS on the Pi:"
-echo "  cd $ROOT && git pull && sudo systemctl restart kronos-telegram kronos-alerts"
+echo "  cd $ROOT && git pull && sudo systemctl restart kronos-telegram kronos-alerts kronos-http"
+echo ""
+echo "Pi-specific .env variables (optional but recommended):"
+echo "  KRONOS_INSTANCE_NAME=pi        # labels this instance in /status responses"
+echo "  KRONOS_STORAGE_PATH=/home/$USER/.kronos-state   # persist state outside repo"
+echo "  KRONOS_OBSIDIAN_DIR=           # leave unset — /note is non-functional on Pi without a vault"
 echo ""
