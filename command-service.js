@@ -1248,7 +1248,7 @@ function parseCreateEventRequest(input, now) {
   const addPrefix = String.raw`(?:\/add\s+|add\s+|create\s+|schedule\s+|book\s+|put\s+|set\s+(?:an?\s+)?(?:alarm|event|reminder|meeting)?\s*)`;
   const durAmount = String.raw`(half\s+an?\s+|an?\s+|\d+)\s*`;
   const durUnit   = String.raw`(minutes?|minute|hours?|hrs?|hr)`;
-  const atMatch = text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))(?:\\s+for\\s+${durAmount}${durUnit})?$`, 'i'));
+  const atMatch = text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)(?:\\s+for\\s+${durAmount}${durUnit})?$`, 'i'));
   if (atMatch) {
     const [, rawTitle, rawDate, rawTime, rawAmount, rawUnit] = atMatch;
     const date = parseDateReference(rawDate, now);
@@ -1295,9 +1295,10 @@ function parseCreateEventRequest(input, now) {
     const start = parseTimeOnDate(rawStartTime, date);
     const end = parseTimeOnDate(rawEndTime, date);
 
-    if (!date || !start || !end || end <= start) {
+    if (!date || !start || !end) {
       return null;
     }
+    if (end <= start) end.setDate(end.getDate() + 1);
 
     return {
       title: normalizeCreateEventTitle(rawTitle),
@@ -1313,9 +1314,10 @@ function parseCreateEventRequest(input, now) {
     const start = parseTimeOnDate(rawStartTime, date);
     const end = parseTimeOnDate(rawEndTime, date);
 
-    if (!date || !start || !end || end <= start) {
+    if (!date || !start || !end) {
       return null;
     }
+    if (end <= start) end.setDate(end.getDate() + 1);
 
     return {
       title: normalizeCreateEventTitle(rawTitle),
@@ -1637,7 +1639,9 @@ function normalizeCreateEventRequestInput(value) {
     .replace(/\bthis\s+(morning|afternoon|evening)\b/gi, 'today')
     .replace(/\bthis\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi, '$1')
     .replace(/\bnoon\b/gi, '12pm')
-    .replace(/\bmidnight\b/gi, '12am')
+    .replace(/\bat\s+midnight\b/gi, 'at 12am')
+    .replace(/\bfrom\s+midnight\b/gi, 'from 12am')
+    .replace(/\bto\s+midnight\b/gi, 'to 12am')
     .replace(/^book\s+/i, 'add ')
     .replace(/^put\s+/i, 'add ')
     .replace(/^throw\s+/i, 'add ')
@@ -1744,7 +1748,7 @@ function parseRemoveEventRequest(input, now) {
     };
   }
 
-  const timedTodayMatch = text.match(new RegExp(`^${removePrefix}(.+?)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))$`, 'i'));
+  const timedTodayMatch = text.match(new RegExp(`^${removePrefix}(.+?)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)$`, 'i'));
   if (timedTodayMatch) {
     const [, rawTitle, rawTime] = timedTodayMatch;
     const date = new Date(now);
@@ -1758,6 +1762,19 @@ function parseRemoveEventRequest(input, now) {
       titleQuery: normalizeRemovalTitleQuery(rawTitle),
       date,
       time
+    };
+  }
+
+  // No date given — assume today
+  const todayOnlyMatch = text.match(new RegExp(`^${removePrefix}(.+)$`, 'i'));
+  if (todayOnlyMatch) {
+    const [, rawTitle] = todayOnlyMatch;
+    const title = normalizeRemovalTitleQuery(rawTitle);
+    if (!title) return null;
+    return {
+      titleQuery: title,
+      date: new Date(now),
+      time: null
     };
   }
 
@@ -1962,7 +1979,7 @@ function parseTimeOnDate(value, date) {
     return null;
   }
 
-  const match = String(value || '').trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/);
+  const match = String(value || '').trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
   if (!match) {
     return null;
   }
@@ -1973,6 +1990,11 @@ function parseTimeOnDate(value, date) {
 
   if (hour < 1 || hour > 12 || minute < 0 || minute > 59) {
     return null;
+  }
+
+  if (!meridiem) {
+    // Infer meridiem: 8–11 = AM, everything else (1–7, 12) = PM
+    meridiem = (hour >= 8 && hour <= 11) ? 'am' : 'pm';
   }
 
   if (meridiem === 'pm' && hour !== 12) {

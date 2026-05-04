@@ -772,3 +772,10 @@
   - `KRONOS_LOG.md`
   - `command-service.js`
 
+### 2026-05-04 04:12:32 PM CDT
+- Summary: `fix: NL event parsing — date-before-from pattern, strip a/an from titles`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `command-service.js`
+
