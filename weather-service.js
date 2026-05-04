@@ -6,17 +6,40 @@ let _cachedGeoLocation = null;
 
 async function autoDetectLocation() {
   if (_cachedGeoLocation) return _cachedGeoLocation;
+
+  // Try ipapi.co first, fall back to ip-api.com if rate limited
+  const result = await tryIpapiCo() || await tryIpApiCom();
+  if (result) _cachedGeoLocation = result;
+  return result || null;
+}
+
+async function tryIpapiCo() {
   try {
     const res = await fetch('https://ipapi.co/json/');
     if (!res.ok) return null;
     const data = await res.json();
-    if (!data.latitude || !data.longitude) return null;
-    _cachedGeoLocation = {
+    if (data.error || !data.latitude || !data.longitude) return null;
+    return {
       latitude: String(data.latitude),
       longitude: String(data.longitude),
       timezone: data.timezone || 'auto'
     };
-    return _cachedGeoLocation;
+  } catch {
+    return null;
+  }
+}
+
+async function tryIpApiCom() {
+  try {
+    const res = await fetch('http://ip-api.com/json/?fields=lat,lon,timezone,status');
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.status !== 'success' || !data.lat || !data.lon) return null;
+    return {
+      latitude: String(data.lat),
+      longitude: String(data.lon),
+      timezone: data.timezone || 'auto'
+    };
   } catch {
     return null;
   }

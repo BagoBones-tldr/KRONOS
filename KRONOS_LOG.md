@@ -779,3 +779,10 @@
   - `KRONOS_LOG.md`
   - `command-service.js`
 
+### 2026-05-04 04:24:07 PM CDT
+- Summary: `fix: no-AM/PM inference, overnight events, date-less remove, midnight title`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `command-service.js`
+
