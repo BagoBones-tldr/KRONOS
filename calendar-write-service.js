@@ -36,11 +36,13 @@ async function createCalendarEvent({ title, start, end, description = '', locati
     });
 
     if (response.ok) {
+      const verified = await verifyEventCreated(client, calendar, title, start);
       return {
         calendarName: calendar.displayName || 'Default calendar',
         title,
         start,
-        end
+        end,
+        verified
       };
     }
 
@@ -146,6 +148,32 @@ async function removeCalendarEvent({ titleQuery, date, time = null }) {
     start: match.parsed.start,
     end: match.parsed.end
   };
+}
+
+async function verifyEventCreated(client, calendar, title, start) {
+  try {
+    await new Promise(r => setTimeout(r, 1000));
+    const range = getTodayRange(start);
+    const objects = await client.fetchCalendarObjects({
+      calendar,
+      timeRange: {
+        start: range.start.toISOString(),
+        end: range.end.toISOString()
+      },
+      expand: true
+    });
+    return objects.some(obj => {
+      const parsed = parseEventData(obj.data);
+      return (
+        matchesTitle(parsed.title, title) &&
+        parsed.start instanceof Date &&
+        !isNaN(parsed.start.valueOf()) &&
+        Math.abs(parsed.start.getTime() - start.getTime()) < 120000
+      );
+    });
+  } catch {
+    return false;
+  }
 }
 
 function prioritizeCalendars(calendars) {

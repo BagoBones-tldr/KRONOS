@@ -272,8 +272,16 @@ async function buildCreateEventResponse(now, input) {
 
   setTimeout(() => require('child_process').exec('osascript -e \'tell application "Calendar" to reload calendars\''), 3000);
 
+  if (!created.verified) {
+    return [
+      `⚠️ Write accepted by iCloud but the event couldn't be confirmed in <b>${escapeHtml(created.calendarName)}</b>.`,
+      `${escapeHtml(created.title)} — ${created.start.toDateString()} at ${formatTime(created.start)} for ${durationMinutes} minutes.`,
+      `Check your calendar directly. If it's not there, set DEFAULT_CALENDAR_NAME in your .env to your primary calendar name.`
+    ].join('\n');
+  }
+
   return [
-    `Added ${escapeHtml(created.title)} to ${escapeHtml(created.calendarName)}.`,
+    `Added <b>${escapeHtml(created.title)}</b> to <b>${escapeHtml(created.calendarName)}</b>.`,
     `${created.start.toDateString()} at ${formatTime(created.start)} for ${durationMinutes} minutes.`
   ].join('\n');
 }
