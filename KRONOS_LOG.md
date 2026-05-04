@@ -727,3 +727,10 @@
   - `telegram-commands.js`
   - `usage-stats.js`
 
+### 2026-05-04 03:26:28 PM CDT
+- Summary: `Fix date-relative NL queries routing to conversational instead of /events`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `command-service.js`
+
