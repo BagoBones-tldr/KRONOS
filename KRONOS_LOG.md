@@ -765,3 +765,10 @@
   - `KRONOS_LOG.md`
   - `command-service.js`
 
+### 2026-05-04 04:02:10 PM CDT
+- Summary: `fix: tolerate 'even' typo in all-day event NL pattern`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `command-service.js`
+

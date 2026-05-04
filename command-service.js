@@ -1287,6 +1287,25 @@ function parseCreateEventRequest(input, now) {
   const dateGroup = String.raw`(today|tomorrow|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)`;
   const timeToken = String.raw`\d{1,2}(?::\d{2})?\s*(?:am|pm)?`;
 
+  // "add title [day] from Xam to Xpm" — date before the time range
+  const fromToDateFirstMatch = text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}\\s+from\\s+(${timeToken})\\s+to\\s+(${timeToken})$`, 'i'));
+  if (fromToDateFirstMatch) {
+    const [, rawTitle, rawDate, rawStartTime, rawEndTime] = fromToDateFirstMatch;
+    const date = parseDateReference(rawDate, now);
+    const start = parseTimeOnDate(rawStartTime, date);
+    const end = parseTimeOnDate(rawEndTime, date);
+
+    if (!date || !start || !end || end <= start) {
+      return null;
+    }
+
+    return {
+      title: normalizeCreateEventTitle(rawTitle),
+      start,
+      end
+    };
+  }
+
   const fromToMatch = text.match(new RegExp(`^${addPrefix}(.+?)\\s+from\\s+(${timeToken})\\s+to\\s+(${timeToken})(?:\\s+(?:for|on)?\\s*${dateGroup})?$`, 'i'));
   if (fromToMatch) {
     const [, rawTitle, rawStartTime, rawEndTime, rawDate] = fromToMatch;
@@ -1587,7 +1606,7 @@ function normalizeCreateEventTitle(value) {
   return titleCase(
     String(value || '')
       .trim()
-      .replace(/^(?:my|the)\s+/i, '')
+      .replace(/^(?:my|the|an?)\s+/i, '')
       .replace(/\s+as\s+an?\s*$/i, '')
   );
 }
