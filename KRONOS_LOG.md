@@ -749,3 +749,12 @@
   - `calendar-write-service.js`
   - `command-service.js`
 
+### 2026-05-04 03:53:52 PM CDT
+- Summary: `fix: all-day event ICS format, fake confirmation guard, write return isAllDay`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `ai-service.js`
+  - `calendar-write-service.js`
+  - `command-service.js`
+

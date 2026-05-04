@@ -1588,6 +1588,7 @@ function normalizeCreateEventTitle(value) {
     String(value || '')
       .trim()
       .replace(/^(?:my|the)\s+/i, '')
+      .replace(/\s+as\s+an?\s*$/i, '')
   );
 }
 
