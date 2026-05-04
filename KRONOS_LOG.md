@@ -714,3 +714,16 @@
   - `daily-clean.js`
   - `launchd/com.projectkronos.daily-briefing.plist`
 
+### 2026-05-04 09:08:44 AM CDT
+- Summary: `Build conversation depth, AI intent routing, policy hardening, and usage tracking`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `ai-policy.js`
+  - `ai-service.js`
+  - `command-service.js`
+  - `conversation-state.js`
+  - `storage-layout.js`
+  - `telegram-commands.js`
+  - `usage-stats.js`
+

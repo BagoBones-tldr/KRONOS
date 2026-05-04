@@ -1011,14 +1011,14 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
         normalized.includes('show me my') ||
         normalized.includes('show me') ||
         normalized.includes('what do i have') ||
+        normalized.includes('do i have') ||
+        normalized.includes('have i got') ||
+        normalized.includes('anything') ||
         normalized.includes('what is on my') ||
         normalized.includes("what's on my") ||
-        normalized.includes('what is on my calendar') ||
-        normalized.includes("what's on my calendar") ||
         normalized.includes('on my calendar') ||
         normalized.includes('my schedule') ||
         normalized.includes('going on') ||
-        normalized.includes('anything on') ||
         normalized.includes('what am i doing') ||
         normalized.includes('look like') ||
         normalized.includes('how does') ||
@@ -1177,6 +1177,13 @@ function inferNaturalLanguageCommand(input, now = new Date(), conversationState 
   const followUp = inferFollowUpCommand(normalized, conversationState, now);
   if (followUp) {
     return followUp;
+  }
+
+  // Catch-all: any likely intent request with a date reference that hasn't been dispatched
+  // above is almost certainly asking about events on that date. Write operations (add, remind,
+  // remove, task) are all caught earlier, so false-positive risk here is very low.
+  if (likelyIntentRequest && eventsDateRef) {
+    return { command: '/events', args: eventsDateRef };
   }
 
   return { command: '', args: '' };
