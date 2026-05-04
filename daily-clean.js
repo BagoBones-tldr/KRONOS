@@ -32,28 +32,8 @@ async function saveBriefingToVault(message, date) {
 
 loadEnv();
 
-function shouldSendScheduledBriefing(now = new Date()) {
-  const targetTimezone = process.env.BRIEFING_TIMEZONE || 'America/Chicago';
-  const targetHour = Number(process.env.BRIEFING_HOUR || 8);
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: targetTimezone,
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: false
-  }).formatToParts(now);
-
-  const hour = Number(parts.find(part => part.type === 'hour')?.value ?? NaN);
-  return hour === targetHour;
-}
-
 async function getDailySchedule() {
-  const scheduledMode = process.argv.includes('--scheduled');
   const now = new Date();
-
-  if (scheduledMode && !shouldSendScheduledBriefing(now)) {
-    console.log('Scheduled run skipped: outside local briefing hour.');
-    return;
-  }
 
   const [events, weather] = await Promise.all([
     fetchTodayEvents(now),

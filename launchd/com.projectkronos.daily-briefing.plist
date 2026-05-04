@@ -14,8 +14,13 @@
   <key>RunAtLoad</key>
   <false/>
 
-  <key>StartInterval</key>
-  <integer>3600</integer>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>8</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
 
   <key>ProcessType</key>
   <string>Background</string>
