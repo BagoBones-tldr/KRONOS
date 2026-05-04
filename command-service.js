@@ -1349,9 +1349,9 @@ function parseCreateEventRequest(input, now) {
 
   // All-day event: "add [title] [on] [day] all day" or "add [title] all day [on] [day]"
   const allDayMatch =
-    text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}\\s+all[- ]?day(?:\\s+event)?$`, 'i')) ||
-    text.match(new RegExp(`^${addPrefix}(.+?)\\s+all[- ]?day(?:\\s+event)?\\s+(?:on\\s+|for\\s+)?${dateGroup}$`, 'i')) ||
-    text.match(new RegExp(`^${addPrefix}all[- ]?day(?:\\s+event)?\\s+(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}$`, 'i'));
+    text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}\\s+all[- ]?day(?:\\s+even\\w*)?$`, 'i')) ||
+    text.match(new RegExp(`^${addPrefix}(.+?)\\s+all[- ]?day(?:\\s+even\\w*)?\\s+(?:on\\s+|for\\s+)?${dateGroup}$`, 'i')) ||
+    text.match(new RegExp(`^${addPrefix}all[- ]?day(?:\\s+even\\w*)?\\s+(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}$`, 'i'));
   if (allDayMatch) {
     const [, rawTitle, rawDate] = allDayMatch;
     const date = parseDateReference(rawDate, now);

@@ -758,3 +758,10 @@
   - `calendar-write-service.js`
   - `command-service.js`
 
+### 2026-05-04 03:58:27 PM CDT
+- Summary: `fix: strip trailing 'as a/an' from event title in NL create`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `command-service.js`
+
