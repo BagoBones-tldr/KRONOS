@@ -365,7 +365,16 @@ function isValidConversationalResponse(text) {
     'i just scheduled'
   ];
 
-  return !forbiddenClaims.some(claim => lowered.includes(claim));
+  if (forbiddenClaims.some(claim => lowered.includes(claim))) {
+    return false;
+  }
+
+  // Block fake command-confirmation formatting: /add, /remove, /remind followed by pipe-separated fields + checkmark
+  if (/\/(?:add|remove|remind|create|delete)\b.+[|｜].+[✅✓☑]/.test(text)) {
+    return false;
+  }
+
+  return true;
 }
 
 function buildAiContextPayload(context, options = {}) {

@@ -272,17 +272,21 @@ async function buildCreateEventResponse(now, input) {
 
   setTimeout(() => require('child_process').exec('osascript -e \'tell application "Calendar" to reload calendars\''), 3000);
 
+  const timeDetail = created.isAllDay
+    ? `${created.start.toDateString()} — all day.`
+    : `${created.start.toDateString()} at ${formatTime(created.start)} for ${durationMinutes} minutes.`;
+
   if (!created.verified) {
     return [
       `⚠️ Write accepted by iCloud but the event couldn't be confirmed in <b>${escapeHtml(created.calendarName)}</b>.`,
-      `${escapeHtml(created.title)} — ${created.start.toDateString()} at ${formatTime(created.start)} for ${durationMinutes} minutes.`,
+      `${escapeHtml(created.title)} — ${timeDetail}`,
       `Check your calendar directly. If it's not there, set DEFAULT_CALENDAR_NAME in your .env to your primary calendar name.`
     ].join('\n');
   }
 
   return [
     `Added <b>${escapeHtml(created.title)}</b> to <b>${escapeHtml(created.calendarName)}</b>.`,
-    `${created.start.toDateString()} at ${formatTime(created.start)} for ${durationMinutes} minutes.`
+    timeDetail
   ].join('\n');
 }
 
@@ -1340,6 +1344,29 @@ function parseCreateEventRequest(input, now) {
       title: normalizeCreateEventTitle(rawTitle),
       start,
       end
+    };
+  }
+
+  // All-day event: "add [title] [on] [day] all day" or "add [title] all day [on] [day]"
+  const allDayMatch =
+    text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}\\s+all[- ]?day(?:\\s+event)?$`, 'i')) ||
+    text.match(new RegExp(`^${addPrefix}(.+?)\\s+all[- ]?day(?:\\s+event)?\\s+(?:on\\s+|for\\s+)?${dateGroup}$`, 'i')) ||
+    text.match(new RegExp(`^${addPrefix}all[- ]?day(?:\\s+event)?\\s+(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}$`, 'i'));
+  if (allDayMatch) {
+    const [, rawTitle, rawDate] = allDayMatch;
+    const date = parseDateReference(rawDate, now);
+    if (!date || !rawTitle?.trim()) return null;
+
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    return {
+      title: normalizeCreateEventTitle(rawTitle),
+      start,
+      end,
+      isAllDay: true
     };
   }
 

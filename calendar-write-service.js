@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { createCalendarClient } = require('./caldav-client');
 const { parseEventData, getTodayRange } = require('./calendar-service');
 
-async function createCalendarEvent({ title, start, end, description = '', location = '' }) {
+async function createCalendarEvent({ title, start, end, description = '', location = '', isAllDay = false }) {
   if (!title || !(start instanceof Date) || !(end instanceof Date)) {
     throw new Error('Missing required event details.');
   }
@@ -26,7 +26,8 @@ async function createCalendarEvent({ title, start, end, description = '', locati
       start,
       end,
       description,
-      location
+      location,
+      isAllDay
     });
 
     const response = await client.createCalendarObject({
@@ -42,6 +43,7 @@ async function createCalendarEvent({ title, start, end, description = '', locati
         title,
         start,
         end,
+        isAllDay,
         verified
       };
     }
@@ -241,7 +243,7 @@ function formatTime(value) {
   });
 }
 
-function buildIcsEvent({ uid, title, start, end, description, location }) {
+function buildIcsEvent({ uid, title, start, end, description, location, isAllDay = false }) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -250,8 +252,8 @@ function buildIcsEvent({ uid, title, start, end, description, location }) {
     'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${toIcsUtc(new Date())}`,
-    `DTSTART:${toIcsUtc(start)}`,
-    `DTEND:${toIcsUtc(end)}`,
+    isAllDay ? `DTSTART;VALUE=DATE:${toIcsDate(start)}` : `DTSTART:${toIcsUtc(start)}`,
+    isAllDay ? `DTEND;VALUE=DATE:${toIcsDate(end)}` : `DTEND:${toIcsUtc(end)}`,
     `SUMMARY:${escapeIcsText(title)}`
   ];
 
@@ -272,6 +274,10 @@ function toIcsUtc(value) {
     .toISOString()
     .replace(/[-:]/g, '')
     .replace(/\.\d{3}Z$/, 'Z');
+}
+
+function toIcsDate(value) {
+  return value.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
 function escapeIcsText(value) {
