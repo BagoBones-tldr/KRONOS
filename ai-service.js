@@ -1,5 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
-const { buildKronosSystemPrompt, buildKronosPolicyLines } = require('./ai-policy');
+const { buildKronosSystemPrompt } = require('./ai-policy');
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
 
@@ -130,7 +130,42 @@ async function generateAiConversation(message, options = {}) {
     return null;
   }
 
+  // Pass ACTION responses through as-is for caller to dispatch
+  if (text.startsWith('ACTION: /')) {
+    return text;
+  }
+
   return isValidConversationalResponse(text) ? text : null;
+}
+
+async function summarizeConversationTurns(turns, existingSummary = null) {
+  const anthropic = getAnthropicClient();
+  if (!anthropic || !Array.isArray(turns) || turns.length === 0) {
+    return null;
+  }
+
+  const formatted = turns
+    .map(t => `${t.role === 'assistant' ? 'KRONOS' : 'User'}: ${t.text}`)
+    .join('\n');
+
+  let prompt = 'Summarize this conversation in 2-3 sentences for use as prior context in a continuing session. Cover what was discussed, what was resolved, and any context worth carrying forward. Plain text only.\n\n';
+  if (existingSummary) {
+    prompt += `Earlier context: ${existingSummary}\n\n`;
+  }
+  prompt += `Conversation:\n${formatted}`;
+
+  try {
+    const response = await anthropic.messages.create({
+      model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
+      max_tokens: 120,
+      temperature: 0.2,
+      system: 'You are a concise summarizer. Output plain text only.',
+      messages: [{ role: 'user', content: prompt }]
+    });
+    return extractText(response).trim() || null;
+  } catch {
+    return null;
+  }
 }
 
 async function requestAnthropicText(prompt, options = {}) {
@@ -237,7 +272,14 @@ function buildConversationSystem(options = {}) {
     '- Avoid boilerplate like "I can help with..." unless the user is explicitly asking what you do.',
     '- Prefer direct, natural lines over assistant filler.',
     '- Do not over-explain simple greetings or acknowledgements.',
-    '- Do not mention exact clock times — use broader phrasing like "before your next event" or "during your longest open block."'
+    '- Do not mention exact clock times — use broader phrasing like "before your next event" or "during your longest open block."',
+    '',
+    'Intent routing:',
+    '- If the user is clearly asking for live schedule or calendar data, respond with exactly: ACTION: /command [args] — nothing else.',
+    '- Use this for: today\'s schedule (/today), tomorrow (/tomorrow), the week (/week), events on a date (/events [date]), next event (/next), free blocks (/free [date]), busy time (/busy [date]), weather (/weather), when is an event (/whenis [name]), conflicts (/conflicts), availability check (/availability [query]).',
+    '- Do NOT trigger ACTION for write operations (/add, /remind, /remove, /task) — those need explicit user intent.',
+    '- Only output ACTION when confident. Casual, ambiguous, or follow-up messages should be answered conversationally.',
+    '- Examples: "do I have anything Tuesday?" → ACTION: /events tuesday | "what\'s the weather?" → ACTION: /weather | "when is my dentist?" → ACTION: /whenis dentist | "am I free Friday afternoon?" → ACTION: /availability friday afternoon'
   ];
 
   const contextLines = [
@@ -247,6 +289,7 @@ function buildConversationSystem(options = {}) {
     `Runtime source: ${options.instanceLabel || 'unknown'}`,
     `Last resolved intent: ${formatLastIntent(options.lastIntent)}`,
     `Saved preferences: ${formatPreferencesForPrompt(options.preferences)}`,
+    `Conversation summary: ${options.summary || 'none'}`,
     `Known capabilities: ${capabilities.join(', ') || 'calendar briefings, focus cues, events, weather, status, log'}`
   ];
 
@@ -300,7 +343,26 @@ function isValidConversationalResponse(text) {
     'i verified',
     'i already sent',
     'i updated your calendar',
-    'i changed your schedule'
+    'i changed your schedule',
+    'i deleted',
+    'i removed',
+    'i set a reminder',
+    'i scheduled',
+    'i booked',
+    'i cancelled',
+    'i completed',
+    'i marked',
+    'i sent you',
+    "i'll remind you",
+    'i will remind you',
+    "i'll send",
+    'i will send',
+    'i noted that',
+    'i saved that',
+    'i have set',
+    'i just added',
+    'i just created',
+    'i just scheduled'
   ];
 
   return !forbiddenClaims.some(claim => lowered.includes(claim));
@@ -512,5 +574,6 @@ module.exports = {
   generateAiBriefing,
   generateAiFocus,
   generateAiWrapUp,
-  generateAiConversation
+  generateAiConversation,
+  summarizeConversationTurns
 };

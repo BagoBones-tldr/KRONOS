@@ -27,10 +27,15 @@ const {
   removeTask: removeTaskEntry,
   formatTaskLine
 } = require('./task-state');
+const { recordCommandUsage, loadUsageStats, formatUsageSummary } = require('./usage-stats');
 
 async function buildCommandResult(commandText, now = new Date(), conversationState = {}) {
   const preferences = await loadPreferences();
   const { command, args, originalText } = normalizeCommand(commandText, now, conversationState);
+
+  if (command && command !== '') {
+    recordCommandUsage(command).catch(() => {});
+  }
 
   try {
     if (command === '/commands' || command === '/help' || command === '/start') {
@@ -495,7 +500,10 @@ async function buildConflictsResponse(targetDate) {
 }
 
 async function buildStatusResponse(targetDate) {
-  const weather = await fetchDailyWeather(targetDate).catch(() => null);
+  const [weather, usageStats] = await Promise.all([
+    fetchDailyWeather(targetDate).catch(() => null),
+    loadUsageStats().catch(() => null)
+  ]);
   const alertsEnabled = Boolean(process.env.ALERT_LEAD_MINUTES || process.env.ALERT_WINDOW_MINUTES);
 
   let calendarOk = true;
@@ -511,7 +519,7 @@ async function buildStatusResponse(targetDate) {
     calendarOk = false;
   }
 
-  return [
+  const lines = [
     'KRONOS status:',
     `Source: ${getInstanceLabel()}`,
     `Calendar access: ${calendarOk ? 'OK' : 'Error'}`,
@@ -521,7 +529,13 @@ async function buildStatusResponse(targetDate) {
     `Alert config: ${alertsEnabled ? 'Configured' : 'Missing config'}`,
     `Brain: ${isAiConfigured() ? 'Anthropic connected' : 'Not configured'}`,
     `Command mode: ${isAiConfigured() ? 'Hybrid deterministic + AI' : 'Deterministic commands active'}`
-  ].join('\n');
+  ];
+
+  if (usageStats && Object.keys(usageStats.commands || {}).length > 0) {
+    lines.push('', formatUsageSummary(usageStats));
+  }
+
+  return lines.join('\n');
 }
 
 async function buildBusyResponse(targetDate) {
@@ -1948,39 +1962,38 @@ async function buildConversationalFallback(message, now = new Date(), conversati
   }
 
   try {
-    return await generateAiConversation(message, {
+    const aiResponse = await generateAiConversation(message, {
       dateLabel: now.toDateString(),
       instanceLabel: getInstanceLabel(),
       recentTurns: conversationState.recentTurns || [],
       lastIntent: conversationState.lastIntent || null,
+      summary: conversationState.summary || null,
       preferences,
       capabilities: [
-        '/today',
-        '/tomorrow',
-        '/next',
-        '/events',
-        '/free',
-        '/busy',
-        '/focus',
-        '/weather',
-        '/week',
-        '/whenis',
-        '/add',
-        '/remind',
-        '/remove',
-        '/remember',
-        '/note',
-        '/preferences',
-        '/tasks',
-        '/task',
-        '/done',
-        '/untask',
-        '/wrapup',
-        '/conflicts',
-        '/status',
-        '/log'
+        '/today', '/tomorrow', '/next', '/events', '/free', '/busy', '/focus',
+        '/weather', '/week', '/whenis', '/add', '/remind', '/remove', '/remember',
+        '/note', '/preferences', '/tasks', '/task', '/done', '/untask',
+        '/wrapup', '/conflicts', '/status', '/log'
       ]
     });
+
+    if (!aiResponse) return null;
+
+    // Dispatch AI-initiated command routing
+    if (aiResponse.startsWith('ACTION: /')) {
+      const actionLine = aiResponse.slice('ACTION: '.length).trim();
+      const spaceIdx = actionLine.indexOf(' ');
+      const actionCmd = spaceIdx === -1 ? actionLine : actionLine.slice(0, spaceIdx);
+      const actionArgs = spaceIdx === -1 ? '' : actionLine.slice(spaceIdx + 1).trim();
+      const dispatched = await buildCommandResult(
+        actionArgs ? `${actionCmd} ${actionArgs}` : actionCmd,
+        now,
+        conversationState
+      );
+      return dispatched.text;
+    }
+
+    return aiResponse;
   } catch (error) {
     console.warn('AI conversation fallback failed:', error.message);
     return null;

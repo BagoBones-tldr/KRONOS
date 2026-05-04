@@ -8,8 +8,11 @@ const {
   saveConversationState,
   getChatConversation,
   updateChatConversation,
-  appendConversationTurn
+  appendConversationTurn,
+  getTurnsForSummarization,
+  SUMMARIZE_AT
 } = require('./conversation-state');
+const { summarizeConversationTurns } = require('./ai-service');
 
 loadEnv();
 
@@ -43,9 +46,29 @@ async function processMessage(message, conversationState, allowedChatId) {
 
   const withUserTurn = appendConversationTurn(chatConversation, 'user', text);
   const withAssistantTurn = appendConversationTurn(withUserTurn, 'assistant', response);
+
+  let finalConversation = withAssistantTurn;
+  if (withAssistantTurn.recentTurns.length >= SUMMARIZE_AT) {
+    const splitResult = getTurnsForSummarization(withAssistantTurn);
+    if (splitResult) {
+      const newSummary = await summarizeConversationTurns(
+        splitResult.toSummarize,
+        chatConversation.summary
+      ).catch(() => null);
+      if (newSummary) {
+        finalConversation = {
+          recentTurns: splitResult.toKeep,
+          lastIntent: withAssistantTurn.lastIntent,
+          summary: newSummary
+        };
+      }
+    }
+  }
+
   updateChatConversation(conversationState, chatId, {
-    recentTurns: withAssistantTurn.recentTurns,
-    lastIntent: result.intent
+    recentTurns: finalConversation.recentTurns,
+    lastIntent: result.intent,
+    summary: finalConversation.summary
   });
 }
 

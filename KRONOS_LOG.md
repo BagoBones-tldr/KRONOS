@@ -706,3 +706,11 @@
   - `KRONOS_LOG.md`
   - `pi/deploy.sh`
 
+### 2026-05-03 11:07:59 PM CDT
+- Summary: `Fix daily briefing never firing due to StartInterval timing mismatch`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `daily-clean.js`
+  - `launchd/com.projectkronos.daily-briefing.plist`
+
