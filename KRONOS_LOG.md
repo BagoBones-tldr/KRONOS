@@ -786,3 +786,10 @@
   - `KRONOS_LOG.md`
   - `command-service.js`
 
+### 2026-05-04 04:45:19 PM CDT
+- Summary: `fix: add ip-api.com fallback for geo when ipapi.co is rate limited`
+- Branch: `main`
+- Files:
+  - `KRONOS_LOG.md`
+  - `weather-service.js`
+
