@@ -17,9 +17,14 @@ function getBriefingsDir() {
   return process.env.KRONOS_BRIEFINGS_PATH || path.join(getKronosNotesDir(), 'briefings');
 }
 
+function getMemoryDir() {
+  return path.join(getKronosNotesDir(), 'memory');
+}
+
 module.exports = {
   getProjectRoot,
   getObsidianRoot,
   getKronosNotesDir,
-  getBriefingsDir
+  getBriefingsDir,
+  getMemoryDir
 };

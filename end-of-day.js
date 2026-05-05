@@ -5,6 +5,7 @@ const { sendTelegramMessage, getRequiredEnv } = require('./telegram-service');
 const { loadTaskState, getOpenTasks, getCompletedTasks } = require('./task-state');
 const { readJson, writeJson } = require('./storage');
 const { STORAGE_PATHS, LEGACY_STORAGE_PATHS } = require('./storage-layout');
+const { appendContext, trimContext } = require('./memory-service');
 
 const STATE_PATH = STORAGE_PATHS.endOfDayState;
 const LEGACY_STATE_PATH = LEGACY_STORAGE_PATHS.endOfDayState;
@@ -48,6 +49,10 @@ async function main() {
 
   await sendTelegramMessage(getRequiredEnv('TELEGRAM_CHAT_ID'), message);
   console.log('Sent end-of-day wrap-up to Telegram!');
+
+  trimContext();
+  const eventTitles = events.map(e => e.title).filter(Boolean).join(', ');
+  appendContext(`Wrap-up sent. Events today: ${eventTitles || 'none'}.`);
 
   if (scheduledMode) {
     await markSentToday(now);

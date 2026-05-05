@@ -9,6 +9,7 @@ const {
 } = require('./briefing-service');
 const { buildLogSummary } = require('./log-service');
 const { appendNote } = require('./obsidian-service');
+const { appendUserFact, loadFullMemory } = require('./memory-service');
 const { fetchDailyWeather } = require('./weather-service');
 const { generateAiConversation, generateAiFocus, isAiConfigured } = require('./ai-service');
 const {
@@ -145,6 +146,10 @@ async function buildCommandResult(commandText, now = new Date(), conversationSta
 
     if (command === '/remember') {
       return buildResult(await buildRememberResponse(args || originalText, preferences), command, originalText);
+    }
+
+    if (command === '/recall') {
+      return buildResult(buildRecallResponse(), command, originalText);
     }
 
     if (command === '/note') {
@@ -629,7 +634,16 @@ async function buildRememberResponse(input, preferences) {
 
   const nextPreferences = applyPreferenceUpdate(preferences, update);
   await savePreferences(nextPreferences);
+  appendUserFact(update.type, update.value);
   return update.confirmation || 'Locked in. I\'ll remember that going forward.';
+}
+
+function buildRecallResponse() {
+  const memory = loadFullMemory();
+  if (!memory) {
+    return 'Nothing in long-term memory yet. Use /remember to start building it.';
+  }
+  return memory;
 }
 
 async function buildNoteResponse(input) {
@@ -718,6 +732,7 @@ function buildHelpResponse() {
     '/remove - Remove a calendar event from a phrase like "remove workout tomorrow at 3pm"',
     '/delete - Alias for /remove',
     '/remember - Save an explicit preference or note for KRONOS',
+    '/recall - Show everything KRONOS has in long-term memory about you',
     '/note - Append a timestamped entry to today\'s Obsidian journal',
     '/preferences - Show saved preferences KRONOS remembers',
     '/tasks - Show open tasks',
@@ -1865,6 +1880,17 @@ function parsePreferenceUpdate(input) {
 
 function parseAvailabilityRequest(input, now) {
   const text = String(input || '').trim();
+
+  // "am I free at 3pm" — time only, no date → default to today
+  const timeOnlyMatch = text.match(/^(?:am i free|do i have time|am i open|am i available)\s+at\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)(?:\s+for\s+(\d+)\s*(minutes?|minute|hours?|hrs?|hr))?$/i);
+  if (timeOnlyMatch) {
+    const [, rawTime, rawAmount, rawUnit] = timeOnlyMatch;
+    const date = new Date(now);
+    const time = parseTimeOnDate(rawTime, date);
+    if (!time) return null;
+    return { date, time, durationMinutes: parseDurationMinutes(rawAmount, rawUnit) };
+  }
+
   const atTimeMatch = text.match(/(?:am i free|do i have time|am i open|am i available)\s+(?:on\s+)?(today|tomorrow|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+at\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm))(?:\s+for\s+(\d+)\s*(minutes?|minute|hours?|hrs?|hr))?/i);
   if (atTimeMatch) {
     const [, rawDate, rawTime, rawAmount, rawUnit] = atTimeMatch;

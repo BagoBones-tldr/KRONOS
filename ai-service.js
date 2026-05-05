@@ -1,5 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { buildKronosSystemPrompt } = require('./ai-policy');
+const { loadMemoryContext } = require('./memory-service');
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
 
@@ -115,7 +116,7 @@ async function generateAiConversation(message, options = {}) {
   }
 
   const messages = buildConversationMessages(message, options.recentTurns || []);
-  const system = buildConversationSystem(options);
+  const system = await buildConversationSystem(options);
 
   const response = await anthropic.messages.create({
     model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
@@ -254,33 +255,33 @@ function buildWrapUpPrompt(context, options = {}) {
 
 // Builds the system parameter for conversational API calls.
 // Context and instructions go here — never in the messages array.
-function buildConversationSystem(options = {}) {
+async function buildConversationSystem(options = {}) {
   const capabilities = options.capabilities || [];
   const base = buildKronosSystemPrompt();
 
   const conversationRules = [
     '',
     'Conversation behavior:',
-    '- Answer the user first. Do not open by explaining your role or listing capabilities unless asked directly.',
-    '- Only steer toward a known KRONOS capability when the user is clearly asking for planning, schedule, reminder, task, or status help.',
-    '- For casual chat, keep it short, warm, and specific.',
+    '- Lead with the answer. Do not open with a preamble, role explanation, or capability list.',
+    '- Mirror message length. A one-sentence message gets one or two sentences back — not a paragraph.',
+    '- If the message is casual, respond casually. Do not pivot to schedule data or commands unprompted.',
     '- Use 1-2 fitting emojis for a standard reply, 2-3 only if the reply is clearly longer.',
     '- Do not redirect casual conversation into planning or commands unless the user clearly asks for that.',
-    '- Only suggest one or two concrete next asks when the user is explicitly asking for help or what you can do.',
-    '- If you are unsure what the user wants, say so briefly and offer one or two likely next things you can help with.',
-    '- Do not mention weather unless the user asks about it or the prompt is clearly about a daily plan.',
-    '- Avoid boilerplate like "I can help with..." unless the user is explicitly asking what you do.',
+    '- When making a suggestion, offer one good one — not a list.',
+    '- If unsure what the user wants, say so in one sentence and offer one likely next step.',
+    '- Do not mention weather unless the user asks or the message is clearly about a daily plan.',
     '- Prefer direct, natural lines over assistant filler.',
     '- Do not over-explain simple greetings or acknowledgements.',
-    '- Do not mention exact clock times — use broader phrasing like "before your next event" or "during your longest open block."',
     '',
     'Intent routing:',
     '- If the user is clearly asking for live schedule or calendar data, respond with exactly: ACTION: /command [args] — nothing else.',
     '- Use this for: today\'s schedule (/today), tomorrow (/tomorrow), the week (/week), events on a date (/events [date]), next event (/next), free blocks (/free [date]), busy time (/busy [date]), weather (/weather), when is an event (/whenis [name]), conflicts (/conflicts), availability check (/availability [query]).',
     '- Do NOT trigger ACTION for write operations (/add, /remind, /remove, /task) — those need explicit user intent.',
     '- Only output ACTION when confident. Casual, ambiguous, or follow-up messages should be answered conversationally.',
-    '- Examples: "do I have anything Tuesday?" → ACTION: /events tuesday | "what\'s the weather?" → ACTION: /weather | "when is my dentist?" → ACTION: /whenis dentist | "am I free Friday afternoon?" → ACTION: /availability friday afternoon'
+    '- Examples: "do I have anything Tuesday?" → ACTION: /events tuesday | "what\'s the weather?" → ACTION: /weather | "when is my dentist?" → ACTION: /whenis dentist | "am I free Friday afternoon?" → ACTION: /availability friday afternoon | "what\'s next on my calendar?" → ACTION: /next | "how\'s my week looking?" → ACTION: /week | "any conflicts today?" → ACTION: /conflicts | "am I free at 3?" → ACTION: /availability today at 3 | "what am I doing this weekend?" → ACTION: /events this weekend'
   ];
+
+  const longTermMemory = loadMemoryContext();
 
   const contextLines = [
     '',
@@ -290,6 +291,7 @@ function buildConversationSystem(options = {}) {
     `Last resolved intent: ${formatLastIntent(options.lastIntent)}`,
     `Saved preferences: ${formatPreferencesForPrompt(options.preferences)}`,
     `Conversation summary: ${options.summary || 'none'}`,
+    `Long-term memory: ${longTermMemory}`,
     `Known capabilities: ${capabilities.join(', ') || 'calendar briefings, focus cues, events, weather, status, log'}`
   ];
 
