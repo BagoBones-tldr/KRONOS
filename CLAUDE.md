@@ -22,6 +22,22 @@ Runtime: Node.js (CommonJS, no TypeScript). No build step. All modules are `requ
 
 ---
 
+## Current context (Cane)
+
+I'm Cane. KRONOS is a personal AI assistant: Node.js + Telegram bot interface + Claude API + CalDAV (Apple Calendar/Reminders).
+
+**Infrastructure:**
+- **Sentinel** — Dell OptiPlex 7010, Ubuntu Server 24.04, LUKS encrypted, static IP `192.168.1.11`, SSH key auth, Cockpit dashboard, `ufw` firewall.
+- **KRONOS** — deployed on Sentinel via Docker. GitHub: `BagoBones-tldr/Calender_Bot`. Local path: `~/kronos`.
+
+**Docker status:** Running on Sentinel via Docker Compose v2.24.0. The `node_modules` loss issue is resolved — `Dockerfile` uses `COPY package*.json ./` → `RUN npm ci` → `COPY . .` and `.dockerignore` excludes `node_modules`.
+
+**BuildKit workaround:** docker-compose v2's bundled BuildKit silently fails `npm ci` on Sentinel (exits 0 but installs nothing). `DOCKER_BUILDKIT=0` is set in `~/.bashrc` to force the legacy builder. Always rebuild with: `DOCKER_BUILDKIT=0 docker-compose build --no-cache`.
+
+**Next:** WireGuard VPN on Sentinel, then Pi 5 reorder (Amazon refund pending).
+
+---
+
 ## Entry points
 
 | File | Purpose |
