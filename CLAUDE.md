@@ -34,7 +34,11 @@ I'm Cane. KRONOS is a personal AI assistant: Node.js + Telegram bot interface + 
 
 **BuildKit workaround:** docker-compose v2's bundled BuildKit silently fails `npm ci` on Sentinel (exits 0 but installs nothing). `DOCKER_BUILDKIT=0` is set in `~/.bashrc` to force the legacy builder. Always rebuild with: `DOCKER_BUILDKIT=0 docker-compose build --no-cache`.
 
-**Next:** WireGuard VPN on Sentinel, then Pi 5 reorder (Amazon refund pending).
+**Tailscale VPN:** Installed on Sentinel as exit node (`tailscale up --advertise-exit-node`). Mac connected (`sudo tailscale up --exit-node=100.103.93.10`), IPv6 disabled on Mac Wi-Fi to prevent leak (`sudo networksetup -setv6off Wi-Fi`). Phone setup pending. Sentinel Tailscale IP: `100.103.93.10`.
+
+**Open:** `/today` still using old deterministic format — ANTHROPIC_API_KEY added to `.env` but AI generation still falling back. Investigate `generateAiBriefing()` in `ai-service.js` next session.
+
+**Next:** Tailscale on phone, then Pi 5 reorder (Amazon refund pending).
 
 ---
 
