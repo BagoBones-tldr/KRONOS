@@ -31,6 +31,7 @@ function getAnthropicApiKey() {
 async function generateAiBriefing(context) {
   const anthropic = getAnthropicClient();
   if (!anthropic) {
+    console.warn('[ai] generateAiBriefing: no API key configured, skipping.');
     return null;
   }
 
@@ -42,6 +43,8 @@ async function generateAiBriefing(context) {
     return firstPass || null;
   }
 
+  console.warn('[ai] generateAiBriefing: first pass failed time validation, retrying with forbidClockTimes.');
+
   const safePass = await requestAnthropicText(buildBriefingPrompt(context, {
     forbidClockTimes: true
   }), {
@@ -52,6 +55,7 @@ async function generateAiBriefing(context) {
     return safePass || null;
   }
 
+  console.warn('[ai] generateAiBriefing: both passes failed time validation, falling back to deterministic.');
   return null;
 }
 
@@ -548,8 +552,9 @@ function formatTime(value) {
 }
 
 function normalizeTimeToken(value) {
+  // Strip all whitespace including narrow no-break space (U+202F) produced by Node 18+ ICU
   return String(value)
-    .replace(/\s+/g, '')
+    .replace(/[^A-Za-z0-9:]/g, '')
     .toUpperCase();
 }
 

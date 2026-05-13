@@ -7,6 +7,7 @@ const STORAGE_PATHS = {
   taskState: `${STATE_DIR}/tasks.json`,
   alertState: `${STATE_DIR}/alerts.json`,
   endOfDayState: `${STATE_DIR}/end-of-day.json`,
+  dailyBriefingState: `${STATE_DIR}/daily-briefing.json`,
   reminderState: `${STATE_DIR}/reminders.json`,
   usageStats: `${STATE_DIR}/usage-stats.json`
 };
