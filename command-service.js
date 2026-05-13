@@ -234,10 +234,10 @@ async function buildFreeTimeResponse(targetDate, args = '') {
 
   const lines = [`Free blocks for ${context.dateLabel}:`];
   for (const block of context.schedule.freeBlocks) {
-    lines.push(
-      `• ${formatTime(block.start)} to ${formatTime(block.end)} ` +
-      `(${block.durationMinutes} minutes)`
-    );
+    const endLabel = (block.end.getHours() === 0 && block.end.getMinutes() === 0)
+      ? 'midnight'
+      : formatTime(block.end);
+    lines.push(`• ${formatTime(block.start)} to ${endLabel} (${block.durationMinutes} minutes)`);
   }
   return lines.join('\n');
 }

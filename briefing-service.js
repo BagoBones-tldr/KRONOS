@@ -57,9 +57,11 @@ function generateBriefing(context) {
 
   if (context.schedule.freeBlocks.length > 0) {
     const longestBlock = [...context.schedule.freeBlocks].sort((a, b) => b.durationMinutes - a.durationMinutes)[0];
+    const blockRange = longestBlock.durationMinutes >= 1440
+      ? 'all day'
+      : `from ${formatTime(longestBlock.start)} to ${formatBlockEndTime(longestBlock.end)}`;
     lines.push(
-      `Free time: ${context.schedule.freeBlocks.length} block(s), longest is ${longestBlock.durationMinutes} minutes ` +
-      `from ${formatTime(longestBlock.start)} to ${formatTime(longestBlock.end)}.`
+      `Free time: ${context.schedule.freeBlocks.length} block(s), longest is ${longestBlock.durationMinutes} minutes ${blockRange}.`
     );
   } else {
     lines.push('Free time: no open blocks between scheduled events.');
@@ -293,6 +295,13 @@ function formatTime(value) {
     hour: 'numeric',
     minute: '2-digit'
   });
+}
+
+function formatBlockEndTime(value) {
+  if (value.getHours() === 0 && value.getMinutes() === 0) {
+    return 'midnight';
+  }
+  return formatTime(value);
 }
 
 function escapeHtml(value) {
