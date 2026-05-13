@@ -1,7 +1,7 @@
 const { loadEnv } = require('./env');
 
 const { buildCommandResult } = require('./command-service');
-const { getUpdates, sendTelegramMessage, sendChatAction, getRequiredEnv } = require('./telegram-service');
+const { getUpdates, dropSession, sendTelegramMessage, sendChatAction, getRequiredEnv } = require('./telegram-service');
 const { loadTelegramState, saveTelegramState } = require('./telegram-state');
 const {
   loadConversationState,
@@ -78,16 +78,22 @@ async function runPollingLoop() {
   const conversationState = await loadConversationState();
   let nextOffset = state.nextOffset;
 
+  await dropSession();
+  await sleep(5000); // let Telegram close the previous long-poll session
   console.log('Telegram command poller started (long polling).');
+
+  let pollBackoff = 3000;
 
   while (true) {
     let updates = [];
 
     try {
       updates = await getUpdates({ offset: nextOffset, timeout: LONG_POLL_TIMEOUT });
+      pollBackoff = 3000; // reset on success
     } catch (err) {
+      const is409 = err.message.includes('409');
       console.error('getUpdates error:', err.message);
-      await sleep(3000);
+      await sleep(is409 ? Math.min(pollBackoff *= 2, 30000) : 3000);
       continue;
     }
 

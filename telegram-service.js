@@ -60,8 +60,16 @@ async function getUpdates(options = {}) {
   return telegramRequest('getUpdates', payload);
 }
 
+async function dropSession() {
+  // Terminates any active getUpdates session on Telegram's end before we start polling.
+  // Without this, a restarted container gets 409 Conflict until Telegram times out the
+  // old 25-second long-poll connection on its own.
+  return telegramRequest('deleteWebhook', { drop_pending_updates: false });
+}
+
 module.exports = {
   getUpdates,
+  dropSession,
   sendTelegramMessage,
   sendChatAction,
   getRequiredEnv
