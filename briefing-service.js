@@ -172,7 +172,10 @@ function suggestFocus(schedule) {
 
   const focusBlock = schedule.freeBlocks.find(block => block.durationMinutes >= 60);
   if (focusBlock) {
-    return `Protect the block from ${formatTime(focusBlock.start)} to ${formatTime(focusBlock.end)} for focused work.`;
+    if (focusBlock.durationMinutes >= 1440) {
+      return 'The day is wide open — block out time for something that matters.';
+    }
+    return `Protect the block from ${formatTime(focusBlock.start)} to ${formatBlockEndTime(focusBlock.end)} for focused work.`;
   }
 
   if (schedule.nextEvent) {
