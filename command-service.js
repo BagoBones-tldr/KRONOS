@@ -1292,7 +1292,10 @@ function parseCreateEventRequest(input, now) {
   const addPrefix = String.raw`(?:\/add\s+|add\s+|create\s+|schedule\s+|book\s+|put\s+|set\s+(?:an?\s+)?(?:alarm|event|reminder|meeting)?\s*)`;
   const durAmount = String.raw`(half\s+an?\s+|an?\s+|\d+)\s*`;
   const durUnit   = String.raw`(minutes?|minute|hours?|hrs?|hr)`;
-  const atMatch = text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)(?:\\s+for\\s+${durAmount}${durUnit})?$`, 'i'));
+  const monthDay  = String.raw`(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?`;
+  const dateGroup = String.raw`(today|tomorrow|this\s+weekend|weekend|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday|${monthDay})`;
+
+  const atMatch = text.match(new RegExp(`^${addPrefix}(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)(?:\\s+for\\s+${durAmount}${durUnit})?$`, 'i'));
   if (atMatch) {
     const [, rawTitle, rawDate, rawTime, rawAmount, rawUnit] = atMatch;
     const date = parseDateReference(rawDate, now);
@@ -1310,7 +1313,7 @@ function parseCreateEventRequest(input, now) {
     };
   }
 
-  const timeFirstAtMatch = text.match(new RegExp(`^${addPrefix}(?:my\\s+|the\\s+)?(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))\\s+(.+?)\\s+(?:on\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?:\\s+for\\s+${durAmount}${durUnit})?$`, 'i'));
+  const timeFirstAtMatch = text.match(new RegExp(`^${addPrefix}(?:my\\s+|the\\s+)?(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))\\s+(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}(?:\\s+for\\s+${durAmount}${durUnit})?$`, 'i'));
   if (timeFirstAtMatch) {
     const [, rawTime, rawTitle, rawDate, rawAmount, rawUnit] = timeFirstAtMatch;
     const date = parseDateReference(rawDate, now);
@@ -1328,7 +1331,25 @@ function parseCreateEventRequest(input, now) {
     };
   }
 
-  const dateGroup = String.raw`(today|tomorrow|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)`;
+  // "add title at time [on/for] date [for duration]" — title before time, date last
+  const titleTimeDateMatch = text.match(new RegExp(`^${addPrefix}(.+?)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm)?)\\s+(?:on\\s+|for\\s+)?${dateGroup}(?:\\s+for\\s+${durAmount}${durUnit})?$`, 'i'));
+  if (titleTimeDateMatch) {
+    const [, rawTitle, rawTime, rawDate, rawAmount, rawUnit] = titleTimeDateMatch;
+    const date = parseDateReference(rawDate, now);
+    const start = parseTimeOnDate(rawTime, date);
+
+    if (!date || !start) {
+      return null;
+    }
+
+    const durationMinutes = parseDurationMinutes(rawAmount, rawUnit);
+    return {
+      title: normalizeCreateEventTitle(rawTitle),
+      start,
+      end: new Date(start.getTime() + durationMinutes * 60000)
+    };
+  }
+
   const timeToken = String.raw`\d{1,2}(?::\d{2})?\s*(?:am|pm)?`;
 
   // "add title [day] from Xam to Xpm" — date before the time range
@@ -2018,13 +2039,26 @@ function parseDateReference(value, baseDate = new Date()) {
     return date;
   }
 
+  const monthDayMatch = normalized.match(/^(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?$/);
+  if (monthDayMatch) {
+    const monthMap = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+    const month = monthMap[monthDayMatch[1].slice(0, 3)];
+    const day = Number(monthDayMatch[2]);
+    const candidate = new Date(date);
+    candidate.setMonth(month, day);
+    if (candidate < date) {
+      candidate.setFullYear(candidate.getFullYear() + 1);
+    }
+    return candidate;
+  }
+
   return null;
 }
 
 function extractDateReference(value) {
   const match = String(value || '')
     .toLowerCase()
-    .match(/\b(tonight|this weekend|next weekend|today|tomorrow|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|this\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/);
+    .match(/\b(tonight|this weekend|next weekend|today|tomorrow|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|this\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?)\b/);
 
   return match ? match[1] : null;
 }
