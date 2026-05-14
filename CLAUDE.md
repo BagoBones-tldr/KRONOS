@@ -40,7 +40,7 @@ I'm Cane. KRONOS is a personal AI assistant: Node.js + Telegram bot interface + 
 - Recurring event support (`/add` creation side first, then series deletion). Natural language patterns like "every Monday at 9am", "weekly", "every weekday". RRULE builder needed in `calendar-write-service.js`; NLP parser update in `command-service.js`.
 - ADR-style decision log — extend architecture docs to cover physical infrastructure decisions (Sentinel hardware, Docker vs systemd, Tailscale setup, storage layout choices). Entries should be portfolio-worthy: written to demonstrate engineering judgment, not just record what was chosen. Format TBD next session.
 
-**Next:** Tailscale on phone, then Pi 5 reorder (Amazon refund pending).
+**Next:** Pi 5 reorder when budget allows (Amazon refund received 2026-05-14, saving up).
 
 ---
 
