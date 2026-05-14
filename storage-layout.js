@@ -9,7 +9,8 @@ const STORAGE_PATHS = {
   endOfDayState: `${STATE_DIR}/end-of-day.json`,
   dailyBriefingState: `${STATE_DIR}/daily-briefing.json`,
   reminderState: `${STATE_DIR}/reminders.json`,
-  usageStats: `${STATE_DIR}/usage-stats.json`
+  usageStats: `${STATE_DIR}/usage-stats.json`,
+  briefingMeta: `${STATE_DIR}/briefing-meta.json`
 };
 
 const LEGACY_STORAGE_PATHS = {

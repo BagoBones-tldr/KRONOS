@@ -1,5 +1,7 @@
 const { analyzeSchedule } = require('./schedule-analysis');
 const { generateAiBriefing, generateAiWrapUp } = require('./ai-service');
+const { writeJson } = require('./storage');
+const { STORAGE_PATHS } = require('./storage-layout');
 
 function buildDailyContext(events, now = new Date(), weather = null) {
   const schedule = analyzeSchedule(events, now);
@@ -95,15 +97,26 @@ function generateBriefing(context) {
 
 async function generateBriefingWithAi(context) {
   try {
-    const aiBriefing = await generateAiBriefing(context);
-    if (aiBriefing) {
-      return aiBriefing;
+    const { text, failReason } = await generateAiBriefing(context);
+    if (text) {
+      writeBriefingMeta(true, null);
+      return text;
     }
+    writeBriefingMeta(false, failReason);
   } catch (error) {
     console.warn('AI briefing failed:', error.message);
+    writeBriefingMeta(false, `exception: ${error.message}`);
   }
 
   return generateBriefing(context);
+}
+
+function writeBriefingMeta(usedAi, failReason) {
+  writeJson(STORAGE_PATHS.briefingMeta, {
+    lastBriefingAt: new Date().toISOString(),
+    usedAi,
+    failReason: failReason || null
+  }).catch(() => {});
 }
 
 function generateWrapUp(context) {

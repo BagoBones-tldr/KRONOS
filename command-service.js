@@ -9,9 +9,9 @@ const {
 } = require('./briefing-service');
 const { buildLogSummary } = require('./log-service');
 const { appendNote } = require('./obsidian-service');
-const { appendUserFact, loadFullMemory } = require('./memory-service');
+const { appendUserFact, loadFullMemory, appendContext } = require('./memory-service');
 const { fetchDailyWeather } = require('./weather-service');
-const { generateAiConversation, generateAiFocus, isAiConfigured } = require('./ai-service');
+const { generateAiConversation, generateAiFocus, isAiConfigured, checkAnthropicConnectivity } = require('./ai-service');
 const {
   loadPreferences,
   savePreferences,
@@ -29,6 +29,8 @@ const {
   formatTaskLine
 } = require('./task-state');
 const { recordCommandUsage, loadUsageStats, formatUsageSummary } = require('./usage-stats');
+const { readJson } = require('./storage');
+const { STORAGE_PATHS } = require('./storage-layout');
 
 async function buildCommandResult(commandText, now = new Date(), conversationState = {}) {
   const preferences = await loadPreferences();
@@ -282,6 +284,7 @@ async function buildCreateEventResponse(now, input) {
     : `${created.start.toDateString()} at ${formatTime(created.start)} for ${durationMinutes} minutes.`;
 
   if (!created.verified) {
+    appendContext(`Event write accepted (unverified): ${created.title} in ${created.calendarName}. ${timeDetail}`);
     return [
       `⚠️ Write accepted by iCloud but the event couldn't be confirmed in <b>${escapeHtml(created.calendarName)}</b>.`,
       `${escapeHtml(created.title)} — ${timeDetail}`,
@@ -289,6 +292,7 @@ async function buildCreateEventResponse(now, input) {
     ].join('\n');
   }
 
+  appendContext(`Event created: ${created.title} in ${created.calendarName}. ${timeDetail}`);
   return [
     `Added <b>${escapeHtml(created.title)}</b> to <b>${escapeHtml(created.calendarName)}</b>.`,
     timeDetail
@@ -371,6 +375,7 @@ async function buildRemoveEventResponse(now, input) {
   }
 
   const removed = await removeCalendarEvent(details);
+  appendContext(`Event removed: ${removed.title} from ${removed.calendarName}. ${removed.start.toDateString()} at ${formatTime(removed.start)}.`);
   return [
     `Removed ${escapeHtml(removed.title)} from ${escapeHtml(removed.calendarName)}.`,
     `${removed.start.toDateString()} at ${formatTime(removed.start)}.`
@@ -517,9 +522,11 @@ async function buildConflictsResponse(targetDate) {
 }
 
 async function buildStatusResponse(targetDate) {
-  const [weather, usageStats] = await Promise.all([
+  const [weather, usageStats, aiCheck, briefingMeta] = await Promise.all([
     fetchDailyWeather(targetDate).catch(() => null),
-    loadUsageStats().catch(() => null)
+    loadUsageStats().catch(() => null),
+    isAiConfigured() ? checkAnthropicConnectivity() : Promise.resolve(null),
+    readJson(STORAGE_PATHS.briefingMeta, null).catch(() => null)
   ]);
   const alertsEnabled = Boolean(process.env.ALERT_LEAD_MINUTES || process.env.ALERT_WINDOW_MINUTES);
 
@@ -536,6 +543,27 @@ async function buildStatusResponse(targetDate) {
     calendarOk = false;
   }
 
+  let brainLine;
+  if (!isAiConfigured()) {
+    brainLine = 'Brain: not configured';
+  } else if (aiCheck?.ok) {
+    brainLine = `Brain: Anthropic reachable (${aiCheck.modelId})`;
+  } else {
+    brainLine = `Brain: key set but unreachable — ${aiCheck?.reason || 'unknown error'}`;
+  }
+
+  let briefingLine;
+  if (!briefingMeta) {
+    briefingLine = 'Last briefing: no record';
+  } else {
+    const when = new Date(briefingMeta.lastBriefingAt).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+    });
+    briefingLine = briefingMeta.usedAi
+      ? `Last briefing: AI — ${when}`
+      : `Last briefing: deterministic fallback — ${briefingMeta.failReason || 'unknown reason'} (${when})`;
+  }
+
   const lines = [
     'KRONOS status:',
     `Source: ${getInstanceLabel()}`,
@@ -544,7 +572,8 @@ async function buildStatusResponse(targetDate) {
     `Conflict count: ${calendarOk ? conflictCount : 'Unavailable'}`,
     `Weather: ${weather ? 'OK (auto-detected)' : 'Unavailable'}`,
     `Alert config: ${alertsEnabled ? 'Configured' : 'Missing config'}`,
-    `Brain: ${isAiConfigured() ? 'Anthropic connected' : 'Not configured'}`,
+    brainLine,
+    briefingLine,
     `Command mode: ${isAiConfigured() ? 'Hybrid deterministic + AI' : 'Deterministic commands active'}`
   ];
 

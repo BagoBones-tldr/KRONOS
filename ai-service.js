@@ -32,31 +32,51 @@ async function generateAiBriefing(context) {
   const anthropic = getAnthropicClient();
   if (!anthropic) {
     console.warn('[ai] generateAiBriefing: no API key configured, skipping.');
-    return null;
+    return { text: null, failReason: 'no API key configured' };
   }
 
-  const firstPass = await requestAnthropicText(buildBriefingPrompt(context), {
-    maxTokens: 260,
-    temperature: 0.35
-  });
-  if (isValidAiTimeReference(firstPass, context)) {
-    return firstPass || null;
+  try {
+    const firstPass = await requestAnthropicText(buildBriefingPrompt(context), {
+      maxTokens: 260,
+      temperature: 0.35
+    });
+    if (isValidAiTimeReference(firstPass, context)) {
+      return { text: firstPass || null, failReason: null };
+    }
+
+    console.warn('[ai] generateAiBriefing: first pass failed time validation, retrying with forbidClockTimes.');
+
+    const safePass = await requestAnthropicText(buildBriefingPrompt(context, {
+      forbidClockTimes: true
+    }), {
+      maxTokens: 260,
+      temperature: 0.35
+    });
+    if (isValidAiTimeReference(safePass, context)) {
+      return { text: safePass || null, failReason: null };
+    }
+
+    console.warn('[ai] generateAiBriefing: both passes failed time validation, falling back to deterministic.');
+    return { text: null, failReason: 'time validation failed (both passes)' };
+  } catch (error) {
+    console.warn('[ai] generateAiBriefing: API error:', error.message);
+    return { text: null, failReason: `API error: ${error.message}` };
+  }
+}
+
+async function checkAnthropicConnectivity() {
+  const anthropic = getAnthropicClient();
+  if (!anthropic) {
+    return { ok: false, reason: 'no API key configured' };
   }
 
-  console.warn('[ai] generateAiBriefing: first pass failed time validation, retrying with forbidClockTimes.');
-
-  const safePass = await requestAnthropicText(buildBriefingPrompt(context, {
-    forbidClockTimes: true
-  }), {
-    maxTokens: 260,
-    temperature: 0.35
-  });
-  if (isValidAiTimeReference(safePass, context)) {
-    return safePass || null;
+  try {
+    const result = await anthropic.models.list({ limit: 1 });
+    const modelId = result.data?.[0]?.id || 'unknown';
+    return { ok: true, modelId };
+  } catch (error) {
+    return { ok: false, reason: error.message };
   }
-
-  console.warn('[ai] generateAiBriefing: both passes failed time validation, falling back to deterministic.');
-  return null;
 }
 
 async function generateAiFocus(context) {
@@ -175,11 +195,12 @@ async function summarizeConversationTurns(turns, existingSummary = null) {
 
 async function requestAnthropicText(prompt, options = {}) {
   const anthropic = getAnthropicClient();
+  const systemText = options.system || buildKronosSystemPrompt();
   const requestParams = {
     model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
     max_tokens: options.maxTokens || 320,
     temperature: options.temperature ?? 0.4,
-    system: options.system || buildKronosSystemPrompt(),
+    system: [{ type: 'text', text: systemText, cache_control: { type: 'ephemeral' } }],
     messages: [
       {
         role: 'user',
@@ -258,7 +279,8 @@ function buildWrapUpPrompt(context, options = {}) {
 }
 
 // Builds the system parameter for conversational API calls.
-// Context and instructions go here — never in the messages array.
+// Returns an array of content blocks: stable (cacheable) + volatile (session-specific).
+// Splitting lets the API cache the stable prefix across requests within the same session.
 async function buildConversationSystem(options = {}) {
   const capabilities = options.capabilities || [];
   const base = buildKronosSystemPrompt();
@@ -288,7 +310,6 @@ async function buildConversationSystem(options = {}) {
   const longTermMemory = loadMemoryContext();
 
   const contextLines = [
-    '',
     'Session context:',
     `Current date: ${options.dateLabel || 'unknown'}`,
     `Runtime source: ${options.instanceLabel || 'unknown'}`,
@@ -299,7 +320,13 @@ async function buildConversationSystem(options = {}) {
     `Known capabilities: ${capabilities.join(', ') || 'calendar briefings, focus cues, events, weather, status, log'}`
   ];
 
-  return [base, ...conversationRules, ...contextLines].join('\n');
+  const stableText = [base, ...conversationRules].join('\n');
+  const volatileText = contextLines.join('\n');
+
+  return [
+    { type: 'text', text: stableText, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: volatileText }
+  ];
 }
 
 // Builds the messages array for conversational API calls.
@@ -325,6 +352,12 @@ function buildConversationMessages(currentMessage, recentTurns) {
   // Claude API requires messages to start with a user turn
   while (messages.length > 0 && messages[0].role === 'assistant') {
     messages.shift();
+  }
+
+  // Cache the last assistant turn so growing history is reused across requests in the same session
+  const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
+  if (lastAssistant) {
+    lastAssistant.content = [{ type: 'text', text: lastAssistant.content, cache_control: { type: 'ephemeral' } }];
   }
 
   // Add the current user message
@@ -591,5 +624,6 @@ module.exports = {
   generateAiFocus,
   generateAiWrapUp,
   generateAiConversation,
-  summarizeConversationTurns
+  summarizeConversationTurns,
+  checkAnthropicConnectivity
 };

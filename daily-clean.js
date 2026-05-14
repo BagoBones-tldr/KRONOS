@@ -7,6 +7,7 @@ const { fetchDailyWeather } = require('./weather-service');
 const { readJson, writeJson, writeText } = require('./storage');
 const { STORAGE_PATHS } = require('./storage-layout');
 const { getBriefingsDir } = require('./runtime-paths');
+const { appendContext } = require('./memory-service');
 
 const KNOTES_BRIEFINGS = getBriefingsDir();
 
@@ -111,6 +112,9 @@ async function main() {
 
   await sendTelegramMessage(getRequiredEnv('TELEGRAM_CHAT_ID'), message);
   console.log('Sent to Telegram!');
+
+  const weatherNote = context.weather?.summary ? ` Weather: ${context.weather.summary}.` : '';
+  appendContext(`Morning briefing sent for ${now.toDateString()}. ${context.schedule.totalEvents} event(s) today.${weatherNote}`);
 
   if (scheduledMode) {
     await markSentToday(now);
