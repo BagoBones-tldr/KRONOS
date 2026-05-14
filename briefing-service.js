@@ -201,7 +201,7 @@ function suggestFocus(schedule) {
 function formatEventLine(event) {
   const parts = [`• <b>${escapeHtml(event.title)}</b>`];
   if (event.start) {
-    parts.push(`at ${formatTime(event.start)}`);
+    parts.push(event.isAllDay ? '(all day)' : `at ${formatTime(event.start)}`);
   }
   if (event.location) {
     parts.push(`(${escapeHtml(event.location)})`);

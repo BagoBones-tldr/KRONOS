@@ -19,6 +19,7 @@ function parseEventData(data) {
   const end = parseIcsDate(data, 'DTEND');
   const isRecurringSeries = /^RRULE(?:;[^:]*)?:/m.test(unfolded);
   const recurrenceId = getIcsField(unfolded, 'RECURRENCE-ID') || '';
+  const isAllDay = /^DTSTART(?:;[^:]*)?:\d{8}$/m.test(unfolded);
 
   return {
     title: summary,
@@ -26,6 +27,7 @@ function parseEventData(data) {
     location,
     start,
     end,
+    isAllDay,
     isRecurringSeries,
     recurrenceId
   };

@@ -454,7 +454,7 @@ async function buildNextEventResponse(targetDate) {
 
   const lines = [
     `Next event for ${context.dateLabel}:`,
-    `<b>${escapeHtml(nextEvent.title)}</b> at ${formatTime(nextEvent.start)}`
+    `<b>${escapeHtml(nextEvent.title)}</b> — ${eventTimeLabel(nextEvent)}`
   ];
 
   if (context.schedule.minutesUntilNextEvent !== null) {
@@ -491,7 +491,7 @@ async function buildEventsResponse(targetDate, args = '') {
 
   const lines = [`Events for ${resolvedDate.toDateString()}:`];
   for (const event of events) {
-    let line = `• ${formatTime(event.start)} - ${escapeHtml(event.title)}`;
+    let line = `• ${eventTimeLabel(event)} — ${escapeHtml(event.title)}`;
     if (event.location) {
       line += ` (${escapeHtml(event.location)})`;
     } else if (event.description) {
@@ -715,7 +715,7 @@ async function buildWeekResponse(targetDate) {
     }
 
     const firstEvent = events[0];
-    lines.push(`• ${label}: ${events.length} event(s), first is ${escapeHtml(firstEvent.title)} at ${formatTime(firstEvent.start)}`);
+    lines.push(`• ${label}: ${events.length} event(s), first is ${escapeHtml(firstEvent.title)} at ${eventTimeLabel(firstEvent)}`);
   }
 
   return lines.join('\n');
@@ -739,7 +739,7 @@ async function buildWhenIsResponse(targetDate, args) {
 
   const lines = [`Matches for "${escapeHtml(query)}" on ${targetDate.toDateString()}:`];
   for (const event of matches) {
-    let line = `• ${escapeHtml(event.title)} at ${formatTime(event.start)}`;
+    let line = `• ${escapeHtml(event.title)} — ${eventTimeLabel(event)}`;
     if (event.location) {
       line += ` (${escapeHtml(event.location)})`;
     } else if (event.description) {
@@ -2383,6 +2383,10 @@ function formatTime(value) {
     hour: 'numeric',
     minute: '2-digit'
   });
+}
+
+function eventTimeLabel(event) {
+  return event.isAllDay ? 'all day' : formatTime(event.start);
 }
 
 function formatDueTask(value) {
