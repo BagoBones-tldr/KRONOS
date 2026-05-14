@@ -1728,8 +1728,10 @@ function normalizeCreateEventRequestInput(value) {
 function parseRemoveEventRequest(input, now) {
   const text = normalizeRemovalRequestInput(input);
   const removePrefix = String.raw`(?:\/remove\s+|\/delete\s+|remove\s+|delete\s+|cancel\s+)`;
+  const monthDay  = String.raw`(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?`;
+  const dateGroup = String.raw`(today|tomorrow|this\s+weekend|weekend|next\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday|${monthDay})`;
 
-  const timedMatch = text.match(new RegExp(`^${removePrefix}(.+?)\\s+(?:on\\s+|for\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))$`, 'i'));
+  const timedMatch = text.match(new RegExp(`^${removePrefix}(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))$`, 'i'));
   if (timedMatch) {
     const [, rawTitle, rawDate, rawTime] = timedMatch;
     const date = parseDateReference(rawDate, now);
@@ -1746,7 +1748,7 @@ function parseRemoveEventRequest(input, now) {
     };
   }
 
-  const reversedTimedMatch = text.match(new RegExp(`^${removePrefix}(.+?)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))\\s+(?:on\\s+|for\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$`, 'i'));
+  const reversedTimedMatch = text.match(new RegExp(`^${removePrefix}(.+?)\\s+at\\s+(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))\\s+(?:on\\s+|for\\s+)?${dateGroup}$`, 'i'));
   if (reversedTimedMatch) {
     const [, rawTitle, rawTime, rawDate] = reversedTimedMatch;
     const date = parseDateReference(rawDate, now);
@@ -1763,7 +1765,7 @@ function parseRemoveEventRequest(input, now) {
     };
   }
 
-  const timeFirstDateMatch = text.match(new RegExp(`^${removePrefix}(?:my\\s+|the\\s+)?(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))\\s+(.+?)\\s+(?:on\\s+|for\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$`, 'i'));
+  const timeFirstDateMatch = text.match(new RegExp(`^${removePrefix}(?:my\\s+|the\\s+)?(\\d{1,2}(?::\\d{2})?\\s*(?:am|pm))\\s+(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}$`, 'i'));
   if (timeFirstDateMatch) {
     const [, rawTime, rawTitle, rawDate] = timeFirstDateMatch;
     const date = parseDateReference(rawDate, now);
@@ -1780,7 +1782,7 @@ function parseRemoveEventRequest(input, now) {
     };
   }
 
-  const dayMatch = text.match(new RegExp(`^${removePrefix}(.+?)\\s+(?:on\\s+|for\\s+)?(today|tomorrow|next\\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$`, 'i'));
+  const dayMatch = text.match(new RegExp(`^${removePrefix}(.+?)\\s+(?:on\\s+|for\\s+)?${dateGroup}$`, 'i'));
   if (dayMatch) {
     const [, rawTitle, rawDate] = dayMatch;
     const date = parseDateReference(rawDate, now);
