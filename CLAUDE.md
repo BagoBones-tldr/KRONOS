@@ -36,7 +36,9 @@ I'm Cane. KRONOS is a personal AI assistant: Node.js + Telegram bot interface + 
 
 **Tailscale VPN:** Installed on Sentinel as exit node (`tailscale up --advertise-exit-node`). Mac connected (`sudo tailscale up --exit-node=100.103.93.10`), IPv6 disabled on Mac Wi-Fi to prevent leak (`sudo networksetup -setv6off Wi-Fi`). Phone setup pending. Sentinel Tailscale IP: `100.103.93.10`.
 
-**Open:** `/today` still using old deterministic format — ANTHROPIC_API_KEY added to `.env` but AI generation still falling back. Investigate `generateAiBriefing()` in `ai-service.js` next session.
+**Open:**
+- Recurring event support (`/add` creation side first, then series deletion). Natural language patterns like "every Monday at 9am", "weekly", "every weekday". RRULE builder needed in `calendar-write-service.js`; NLP parser update in `command-service.js`.
+- ADR-style decision log — extend architecture docs to cover physical infrastructure decisions (Sentinel hardware, Docker vs systemd, Tailscale setup, storage layout choices). Entries should be portfolio-worthy: written to demonstrate engineering judgment, not just record what was chosen. Format TBD next session.
 
 **Next:** Tailscale on phone, then Pi 5 reorder (Amazon refund pending).
 
