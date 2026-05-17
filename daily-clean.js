@@ -37,15 +37,19 @@ async function saveBriefingToVault(message, date) {
 function shouldSendScheduledBriefing(now = new Date()) {
   const targetTimezone = process.env.BRIEFING_TIMEZONE || 'America/Chicago';
   const targetHour = Number(process.env.BRIEFING_HOUR || 8);
+  const targetMinute = Number(process.env.BRIEFING_MINUTE || 0);
+  const minuteWindow = Number(process.env.BRIEFING_MINUTE_WINDOW || 15);
 
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: targetTimezone,
     hour: 'numeric',
+    minute: 'numeric',
     hour12: false
   }).formatToParts(now);
 
   const hour = Number(parts.find(p => p.type === 'hour')?.value ?? NaN);
-  return hour === targetHour;
+  const minute = Number(parts.find(p => p.type === 'minute')?.value ?? NaN);
+  return hour === targetHour && minute >= targetMinute && minute < targetMinute + minuteWindow;
 }
 
 async function wasAlreadySentToday(now = new Date()) {
