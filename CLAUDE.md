@@ -27,20 +27,22 @@ Runtime: Node.js (CommonJS, no TypeScript). No build step. All modules are `requ
 I'm Cane. KRONOS is a personal AI assistant: Node.js + Telegram bot interface + Claude API + CalDAV (Apple Calendar/Reminders).
 
 **Infrastructure:**
-- **Sentinel** — Dell OptiPlex 7010, Ubuntu Server 24.04, LUKS encrypted, static IP `192.168.1.11`, SSH key auth, Cockpit dashboard, `ufw` firewall.
-- **KRONOS** — deployed on Sentinel via Docker. GitHub: `BagoBones-tldr/Calender_Bot`. Local path: `~/kronos`.
+- **Sentinel** — Dell OptiPlex 7010, Ubuntu Desktop (reinstalled 2026-05-24, swapped from Server for an interactive GUI), unencrypted disk, static IP `192.168.1.11`, SSH key auth, `ufw` firewall. GUI apps via snap: Firefox, VS Code, Telegram Desktop, Bitwarden, Proton Mail, Thunderbird.
+- **KRONOS** — repo cloned at `~/Developer/project-kronos/`. GitHub: `BagoBones-tldr/KRONOS`. **Not currently deployed** — `.env` is being rebuilt from Bitwarden at a deliberate pace; no running services yet. Deployment approach (Docker vs. systemd vs. plain `node`) TBD on re-deploy.
 
-**Docker status:** Running on Sentinel via Docker Compose v2.24.0. The `node_modules` loss issue is resolved — `Dockerfile` uses `COPY package*.json ./` → `RUN npm ci` → `COPY . .` and `.dockerignore` excludes `node_modules`.
+**Syncthing (Mac ↔ Sentinel):** Bidirectional Obsidian vault sync. Folder ID `fxtux-q3qld`, mounted at `/home/quintin-edwards/Documents/Obsidian Vault/`. Tower-side ignore patterns applied via REST API (`(?i)SECRETS-TO-BACKUP*`, `(?i).env`, `(?i).env.*`, `(?i)*.env`, `(?i)*credentials*.json`, `(?i)*api-keys*`); same set mirrored on the Mac. Vault layout has KRONOS Notes nested under `Projects/KRONOS Notes/` — `.env` overrides `KRONOS_OBSIDIAN_NOTES_DIR` and `KRONOS_BRIEFINGS_PATH` accordingly.
 
-**BuildKit workaround:** docker-compose v2's bundled BuildKit silently fails `npm ci` on Sentinel (exits 0 but installs nothing). `DOCKER_BUILDKIT=0` is set in `~/.bashrc` to force the legacy builder. Always rebuild with: `DOCKER_BUILDKIT=0 docker-compose build --no-cache`.
+**Docker:** Not currently installed on Sentinel — wiped in the reinstall. Prior deployment ran KRONOS via Docker Compose v2.24.0 with `DOCKER_BUILDKIT=0` (legacy builder forced because v2's bundled BuildKit silently failed `npm ci`). If Docker is reinstalled, keep that workaround in `~/.bashrc`.
 
-**Tailscale VPN:** Installed on Sentinel as exit node (`tailscale up --advertise-exit-node`). Mac connected (`sudo tailscale up --exit-node=100.103.93.10`), IPv6 disabled on Mac Wi-Fi to prevent leak (`sudo networksetup -setv6off Wi-Fi`). Phone setup pending. Sentinel Tailscale IP: `100.103.93.10`.
+**Tailscale VPN:** Not currently installed on Sentinel — wiped in the reinstall. Prior setup had Sentinel as exit node and Mac connected with IPv6 disabled on Wi-Fi to prevent leaks. Reinstall pending.
 
 **Open:**
+- Rebuild Sentinel `.env` from Bitwarden (paced over days to mitigate burnout). `.env.template` already prepared at repo root with Linux paths.
+- Re-deploy KRONOS on Sentinel once `.env` is filled. Decide deployment mode (Docker vs. systemd vs. plain `node`) at that point.
 - Recurring event support (`/add` creation side first, then series deletion). Natural language patterns like "every Monday at 9am", "weekly", "every weekday". RRULE builder needed in `calendar-write-service.js`; NLP parser update in `command-service.js`.
-- ADR-style decision log — extend architecture docs to cover physical infrastructure decisions (Sentinel hardware, Docker vs systemd, Tailscale setup, storage layout choices). Entries should be portfolio-worthy: written to demonstrate engineering judgment, not just record what was chosen. Format TBD next session.
+- ADR-style decision log — extend architecture docs to cover physical infrastructure decisions (Sentinel hardware, Server-vs-Desktop swap, Docker vs systemd, Tailscale setup, storage layout choices). Entries should be portfolio-worthy: written to demonstrate engineering judgment, not just record what was chosen. The ADR scaffolding already exists in the vault at `Projects/homelab/decisions/`.
 
-**Next:** Pi 5 reorder when budget allows (Amazon refund received 2026-05-14, saving up).
+**Next:** Pi 5 reorder when budget allows (Amazon refund received 2026-05-14, saving up). Reinstall Tailscale on Sentinel after `.env` rebuild so phone/away access works again.
 
 ---
 
