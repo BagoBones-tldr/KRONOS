@@ -28,7 +28,7 @@ I'm Cane. KRONOS is a personal AI assistant: Node.js + Telegram bot interface + 
 
 **Infrastructure:**
 - **Sentinel** — Dell OptiPlex 7010, Ubuntu Desktop (reinstalled 2026-05-24, swapped from Server for an interactive GUI), unencrypted disk, static IP `192.168.1.11`, SSH key auth, `ufw` firewall. GUI apps via snap: Firefox, VS Code, Telegram Desktop, Bitwarden, Proton Mail, Thunderbird.
-- **KRONOS** — repo cloned at `~/Developer/project-kronos/`. GitHub: `BagoBones-tldr/Calender_Bot`. **Not currently deployed** — `.env` is being rebuilt from Bitwarden at a deliberate pace; no running services yet. Deployment approach (Docker vs. systemd vs. plain `node`) TBD on re-deploy.
+- **KRONOS** — repo cloned at `~/Developer/project-kronos/`. GitHub: `BagoBones-tldr/KRONOS`. **Not currently deployed** — `.env` is being rebuilt from Bitwarden at a deliberate pace; no running services yet. Deployment approach (Docker vs. systemd vs. plain `node`) TBD on re-deploy.
 
 **Syncthing (Mac ↔ Sentinel):** Bidirectional Obsidian vault sync. Folder ID `fxtux-q3qld`, mounted at `/home/quintin-edwards/Documents/Obsidian Vault/`. Tower-side ignore patterns applied via REST API (`(?i)SECRETS-TO-BACKUP*`, `(?i).env`, `(?i).env.*`, `(?i)*.env`, `(?i)*credentials*.json`, `(?i)*api-keys*`); same set mirrored on the Mac. Vault layout has KRONOS Notes nested under `Projects/KRONOS Notes/` — `.env` overrides `KRONOS_OBSIDIAN_NOTES_DIR` and `KRONOS_BRIEFINGS_PATH` accordingly.
 
